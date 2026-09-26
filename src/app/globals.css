@@ -88,16 +88,38 @@ input:focus-visible {
   position: fixed;
   inset: 0;
   z-index: -1;
-  transition: background 1.2s ease;
+  overflow: hidden;
+  pointer-events: none;
+  background: #070b12;
+}
+
+/* One gradient layer per sky state; the newest fades in over the ones beneath
+   (SkyBackdrop prunes the occluded layers once the fade settles). */
+.sky-grad {
+  position: absolute;
+  inset: 0;
   background: linear-gradient(180deg, #0b1a30 0%, #070b12 100%);
 }
 
-.sky-layer::after {
+.sky-grad:not([data-base]) {
+  animation: skyIn 1200ms ease forwards;
+}
+
+@keyframes skyIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Sun glow (day skies only). */
+.sky-grad::after {
   content: "";
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 1.2s ease;
   background: radial-gradient(
     900px 520px at 78% -8%,
     rgba(255, 200, 120, 0.28),
@@ -105,19 +127,19 @@ input:focus-visible {
   );
 }
 
-.sky-layer[data-sky="clear-day"] {
+.sky-grad[data-sky="clear-day"] {
   background: linear-gradient(180deg, #2f74bd 0%, #1c4e8c 46%, #0e2649 100%);
 }
-.sky-layer[data-sky="clear-day"]::after {
+.sky-grad[data-sky="clear-day"]::after {
   opacity: 1;
 }
-.sky-layer[data-sky="clear-night"] {
+.sky-grad[data-sky="clear-night"] {
   background: linear-gradient(180deg, #0b1a3a 0%, #0a1024 55%, #05070f 100%);
 }
-.sky-layer[data-sky="cloudy-day"] {
+.sky-grad[data-sky="cloudy-day"] {
   background: linear-gradient(180deg, #4b5d70 0%, #2d3a49 50%, #161d27 100%);
 }
-.sky-layer[data-sky="cloudy-day"]::after {
+.sky-grad[data-sky="cloudy-day"]::after {
   opacity: 0.5;
   background: radial-gradient(
     900px 520px at 78% -8%,
@@ -125,20 +147,165 @@ input:focus-visible {
     transparent 60%
   );
 }
-.sky-layer[data-sky="cloudy-night"] {
+.sky-grad[data-sky="cloudy-night"] {
   background: linear-gradient(180deg, #1d2632 0%, #141a23 55%, #0a0e13 100%);
 }
-.sky-layer[data-sky="rain"] {
+.sky-grad[data-sky="rain"] {
   background: linear-gradient(180deg, #2c3c4b 0%, #1b2833 52%, #0e161e 100%);
 }
-.sky-layer[data-sky="snow"] {
+.sky-grad[data-sky="snow"] {
   background: linear-gradient(180deg, #4d5d6d 0%, #2a343f 54%, #161c24 100%);
 }
-.sky-layer[data-sky="storm"] {
+.sky-grad[data-sky="storm"] {
   background: linear-gradient(180deg, #2b2742 0%, #191628 54%, #0b0a14 100%);
 }
-.sky-layer[data-sky="fog"] {
+.sky-grad[data-sky="fog"] {
   background: linear-gradient(180deg, #3c434c 0%, #262c34 54%, #141820 100%);
+}
+
+/* ── Ambient motion (FR-10) — all pure CSS, frozen under reduced-motion ─── */
+
+.fx-stars,
+.fx-clouds,
+.fx-rain,
+.fx-snow,
+.fx-flash,
+.fx-fog {
+  position: absolute;
+  inset: 0;
+}
+
+.fx-stars {
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 65% 15%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 80% 40%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 40% 62%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 12% 72%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 90% 78%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 55% 86%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 33% 22%, rgba(255, 255, 255, 0.7), transparent);
+  animation: twinkle 5s ease-in-out infinite alternate;
+}
+.fx-stars--dim {
+  filter: brightness(0.55);
+}
+@keyframes twinkle {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 0.95;
+  }
+}
+
+.fx-clouds {
+  inset: -12% -22%;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(closest-side, rgba(255, 255, 255, 0.1), transparent),
+    radial-gradient(closest-side, rgba(255, 255, 255, 0.08), transparent),
+    radial-gradient(closest-side, rgba(255, 255, 255, 0.07), transparent);
+  background-size: 55% 40%, 46% 32%, 62% 46%;
+  background-position: 8% 22%, 66% 14%, 42% 56%;
+  animation: drift 42s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  from {
+    transform: translateX(-3.5%);
+  }
+  to {
+    transform: translateX(3.5%);
+  }
+}
+
+.fx-rain {
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.18) 0 1px,
+    transparent 1px 9px
+  );
+  background-size: 60px 60px;
+  animation: rainfall 0.6s linear infinite;
+}
+.fx-rain--heavy {
+  opacity: 0.72;
+  animation-duration: 0.4s;
+}
+@keyframes rainfall {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -18px 60px;
+  }
+}
+
+.fx-snow {
+  opacity: 0.85;
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  background-image:
+    radial-gradient(2px 2px at 10% 12%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 32% 24%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 52% 8%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(2px 2px at 72% 18%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 90% 30%, rgba(255, 255, 255, 0.8), transparent);
+  animation: snowfall 6s linear infinite;
+}
+@keyframes snowfall {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 24px 200px;
+  }
+}
+
+.fx-flash {
+  background: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  animation: flash 9s ease-out infinite;
+}
+@keyframes flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  1% {
+    opacity: 0.45;
+  }
+  2% {
+    opacity: 0;
+  }
+  3.5% {
+    opacity: 0.3;
+  }
+  5% {
+    opacity: 0;
+  }
+}
+
+.fx-fog {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(210, 216, 222, 0.12) 46%,
+    rgba(210, 216, 222, 0.18) 55%,
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: fogdrift 24s ease-in-out infinite alternate;
+}
+@keyframes fogdrift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
 }
 
 /* ── Shell & top bar ───────────────────────────────────────────────────── */
@@ -318,7 +485,8 @@ input:focus-visible {
   grid-template-columns: 1fr auto;
   grid-template-areas:
     "place now"
-    "stats stats";
+    "stats stats"
+    "sun sun";
   gap: 26px 20px;
   align-items: start;
 }
@@ -328,12 +496,80 @@ input:focus-visible {
   min-width: 0;
 }
 
+.hero-place-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .hero-place h1 {
   font-size: clamp(30px, 4.4vw, 46px);
   font-weight: 600;
   letter-spacing: -1.4px;
   line-height: 1.05;
   overflow-wrap: anywhere;
+}
+
+.save-star {
+  flex-shrink: 0;
+  margin-top: 6px;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--faint);
+  transition: color 0.16s, transform 0.16s;
+}
+
+.save-star:hover {
+  color: var(--warm);
+  transform: scale(1.12);
+}
+
+.save-star.saved {
+  color: var(--warm);
+}
+
+/* Sun arc (FR-12) */
+.hero-sun {
+  grid-area: sun;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--glass-border-soft);
+}
+
+.sun-end {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sun-arc {
+  flex: 1;
+  height: 40px;
+  min-width: 0;
+}
+
+.sun-arc-track {
+  stroke: var(--glass-border);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.sun-arc-base {
+  stroke: var(--glass-border-soft);
+  stroke-width: 1;
+}
+
+.sun-arc-dot {
+  fill: var(--warm);
+  filter: drop-shadow(0 0 5px rgba(255, 180, 84, 0.7));
+}
+
+.sun-arc-dot.night {
+  fill: var(--faint);
+  filter: none;
 }
 
 .hero-place p {
@@ -783,7 +1019,8 @@ input:focus-visible {
     grid-template-areas:
       "place"
       "now"
-      "stats";
+      "stats"
+      "sun";
     gap: 18px;
   }
   .hero-now {
@@ -806,7 +1043,8 @@ input:focus-visible {
     scroll-behavior: auto;
   }
   .sky-layer,
-  .sky-layer::after {
+  .sky-grad,
+  .sky-grad::after {
     transition: none;
   }
   *,
@@ -815,4 +1053,291 @@ input:focus-visible {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ── Command palette (⌘K), favorites, keyboard hints ───────────────────── */
+
+kbd,
+.kbd-hint {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border-soft);
+  color: var(--muted);
+}
+
+.kbd-hint {
+  margin-left: 6px;
+}
+
+.fav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.fav-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border-soft);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.fav-chip.active {
+  border-color: var(--accent);
+  background: var(--glass-strong);
+}
+
+.fav-chip > button:first-child {
+  padding: 7px 4px 7px 14px;
+  font-size: 12.5px;
+}
+
+.fav-chip-x {
+  padding: 7px 12px 7px 6px;
+  font-size: 13px;
+  color: var(--faint);
+}
+
+.fav-chip-x:hover {
+  color: var(--danger);
+}
+
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 16px 16px;
+  background: rgba(5, 8, 15, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: paletteBackdropIn 0.16s ease;
+}
+
+.palette {
+  width: min(560px, 100%);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: rgba(18, 24, 34, 0.86);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: paletteIn 0.18s ease;
+}
+
+@keyframes paletteBackdropIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes paletteIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.palette-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--glass-border-soft);
+}
+
+.palette-input input {
+  flex: 1;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.palette-input input::placeholder {
+  color: var(--faint);
+}
+
+.palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+}
+
+.palette-note {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.palette-item.active {
+  background: var(--glass-strong);
+}
+
+.palette-choose {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.palette-tag {
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+.palette-star {
+  padding: 10px 14px;
+  font-size: 15px;
+  color: var(--faint);
+}
+
+.palette-star.saved {
+  color: var(--warm);
+}
+
+.palette-foot {
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--glass-border-soft);
+  font-size: 10px;
+  color: var(--faint);
+}
+
+.palette-foot kbd {
+  margin-right: 4px;
+}
+
+/* ── Colophon ("How it's built") ───────────────────────────────────────── */
+
+.footer-link {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.footer-link:hover {
+  color: var(--ink);
+}
+
+.colophon {
+  width: min(520px, 100%);
+  padding: 26px 28px 28px;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: rgba(18, 24, 34, 0.9);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  animation: paletteIn 0.18s ease;
+}
+
+.colophon-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.colophon-head h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.colophon-close {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.colophon-close:hover {
+  color: var(--ink);
+}
+
+.colophon p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.colophon p + p {
+  margin-top: 12px;
+}
+
+.colophon strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.colophon-label {
+  margin-top: 18px !important;
+  font-size: 10px !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--faint) !important;
+}
+
+.colophon-sources {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.colophon-sources li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--glass-border-soft);
+  font-size: 13px;
+}
+
+.colophon-sources a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.colophon-sources a:hover {
+  text-decoration: underline;
+}
+
+.colophon-sources span {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.colophon-foot {
+  margin-top: 18px !important;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border-soft);
+  font-size: 12px !important;
 }

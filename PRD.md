@@ -1,8 +1,8 @@
 # PRD — Ad-Free Weather (codename: *weather*)
 
-**Status:** Draft v0.2 (personal-app reframe — see DECISIONS.md 2026-09-26)
+**Status:** Draft v0.3 (portfolio-enhancement wave — see DECISIONS.md 2026-09-26)
 **Author:** Evan Appel
-**Date:** 2026-08-14 (reframed 2026-09-26)
+**Date:** 2026-08-14 (reframed 2026-09-26; enhancements added 2026-09-26)
 **Audience:** Primarily personal use (Evan's everyday weather app), shown in the
 evanappel.me / enki portfolio. Anyone who wants a clean weather lookup benefits too.
 
@@ -53,9 +53,13 @@ Fast first paint, works on a phone.
   severe-weather alerts pages, news, webcams, air quality, pollen, "Wundermap"
   layer soup, etc. (Note: hourly data shown as **trend charts within the 10-day
   forecast** is in scope — see FR-4 and DECISIONS.md 2026-08-22.)
-- User accounts, saved locations sync, or notifications.
-- Native mobile apps (responsive web only).
-- A custom backend/database — the app is a thin client over public weather APIs.
+- **User accounts, server-side sync, or notifications.** (Client-side favorite
+  locations in `localStorage` are now in scope — see FR-11 — but there is still
+  no account and nothing syncs across devices.)
+- Native mobile apps (responsive web + installable PWA only — see NFR-7).
+- A custom backend/database — the app stays a thin client over public weather
+  APIs. (A Next.js route handler for the dynamic social image (FR-13) is a build
+  artifact, not a data backend.)
 - Monetization of any kind.
 
 ## 4. Target Users & Personas
@@ -69,7 +73,7 @@ Fast first paint, works on a phone.
 
 | Dimension | Decision |
 |---|---|
-| Scope | **Exactly two features**: 10-day forecast + interactive radar map. Nothing else. |
+| Scope | **Two core features**: 10-day forecast + interactive radar map. The v0.3 enhancements (§6.5) are polish, presentation, and *conveniences around those two* (animated backdrop, local favorites, ⌘K, sunrise/sunset, social image) — not new data features like hourly tables or alerts, which stay out. |
 | Forecast data | **Open-Meteo** (`api.open-meteo.com`) — free, no API key, global, up to 16-day daily. We display 10. |
 | Geocoding | **Open-Meteo Geocoding API** (`geocoding-api.open-meteo.com`) for name → lat/lon search. |
 | Radar tiles | **RainViewer** public tile API — free, no key; past + nowcast frames with timestamps. |
@@ -123,16 +127,74 @@ Fast first paint, works on a phone.
 - **NFR-4** Attribute data sources in the UI footer (Open-Meteo, RainViewer,
   OpenStreetMap) per their terms.
 
+### 6.5 Portfolio enhancements (v0.3)
+
+These sharpen the app as a portfolio piece. They keep the two core features,
+the keyless data sources, and the ad-free/tracker-free stance. Grouped to match
+the five ideas agreed on 2026-09-26.
+
+**Idea 1 — Animated atmosphere (visual only, in scope).**
+- **FR-10** The sky-reactive backdrop **animates**: it **crossfades** between sky
+  states instead of hard-snapping (two stacked gradient layers, opacity fade),
+  and renders **condition-appropriate ambient motion** — drifting clouds, rain
+  streaks, a night starfield, falling snow, and a sun/glow that leans toward the
+  horizon near sunset. All motion is **gated behind `prefers-reduced-motion`**,
+  which falls back to the current static gradient. Implemented with CSS/canvas —
+  no new runtime data source.
+
+**Idea 2 — Dynamic social preview (Vercel-native).**
+- **FR-13** A dynamic **Open Graph image** endpoint (`@vercel/og` / a Next.js
+  route) renders a live weather card — place name, current temperature,
+  condition, and the matching sky palette — so a shared link unfurls into a
+  branded card. Wire the `<meta>` tags so it is picked up by social/chat unfurls.
+
+**Idea 3 — Presentation & story.**
+- **FR-14** An in-app **"How it's built" / colophon** panel (or route) explains
+  the keyless architecture, the three data sources, and the ad-free/tracker-free
+  stance, and links the decision log. (The repo README case study is a
+  presentation artifact tracked in TASKS, not an app requirement.)
+
+**Idea 5 — Product depth (scope expansion, agreed 2026-09-26).**
+- **FR-11** **Command palette + favorite locations.** `⌘K` / `Ctrl-K` opens a
+  palette to search and switch locations; users can **save/favorite** locations,
+  persisted in `localStorage` (no account, no server sync). Favorites and the
+  active location rehydrate on load.
+- **FR-12** **Sunrise / sunset.** Show sunrise and sunset times for the active
+  location and a **day-progress arc**, using Open-Meteo's keyless daily
+  `sunrise`/`sunset` fields. Pairs with the animated sky (FR-10).
+
+> *Idea 4 (quality proof) is non-functional — see NFR-5..NFR-8.*
+
+### 6.6 Non-functional (v0.3)
+- **NFR-5** **Accessibility.** Full keyboard navigation, visible focus states,
+  screen-reader labels on controls, and **WCAG AA contrast** verified on the dark
+  glass theme.
+- **NFR-6** **Performance proof.** Target ~100 Lighthouse mobile; keep heavy
+  bundles (map, charts) lazy-loaded; document the result.
+- **NFR-7** **Installable PWA + offline.** Installable (manifest + service
+  worker); cache the **last successful forecast** so the app shows something
+  useful offline instead of a blank error.
+- **NFR-8** **Test depth + CI.** Keep the unit suite green and add a **Playwright
+  E2E smoke** (load → default forecast → switch location → radar renders); run
+  test + lint + build in **CI** on every push/PR.
+
 ## 7. Out of Scope / Later
 
-Hourly forecast detail, severe-weather alerts, saved multi-location dashboard,
-shareable permalinks per location, PWA/offline, additional map layers
-(satellite, temperature, wind). Capture these in `TASKS.md` under a "Later"
-heading rather than building them now.
+Still out (capture in `TASKS.md` "Later", don't build now): a standalone hourly
+table / HOURLY tab, severe-weather alerts, historical data, shareable
+per-location permalinks (beyond the OG image), additional map layers (satellite,
+temperature, wind), and any account/server-side sync of favorites.
 
 ## 8. Success Criteria
 
 - A visitor can, in under ~10 seconds and with zero ads: find their location,
   read a clean 10-day forecast, and watch the radar animate over their area.
-- Lighthouse: no ad/tracker requests; good mobile performance.
-- Deployed and reachable at weather.evanappel.me.
+- **The first load is memorable** — the animated, condition-accurate sky reads as
+  craft, and degrades cleanly under `prefers-reduced-motion`.
+- **Reads as senior up close:** keyboard-navigable, AA-contrast, ~100 Lighthouse
+  mobile, unit + E2E tests green in CI.
+- **Shareable:** pasting the link unfurls into a live weather card (FR-13).
+- **Tells a story:** the README case study + in-app colophon make the keyless,
+  ad-free, deliberate-tradeoff design legible to a portfolio visitor.
+- Deployed and reachable (custom domain `weather.evanappel.me` deferred until
+  DNS is set up; served at the Vercel URL until then).

@@ -33,6 +33,7 @@ const FORECAST: Forecast = {
     isDay: true,
     windSpeed: 6,
   },
+  utcOffsetSeconds: -14400,
   days: Array.from({ length: 10 }, (_, i) => ({
     date: `2026-08-${String(16 + i).padStart(2, "0")}`,
     tempMax: 80 + i,
@@ -40,6 +41,8 @@ const FORECAST: Forecast = {
     precipitationSum: 0,
     precipitationProbabilityMax: i * 5,
     weatherCode: 0,
+    sunrise: `2026-08-${String(16 + i).padStart(2, "0")}T06:00`,
+    sunset: `2026-08-${String(16 + i).padStart(2, "0")}T18:00`,
   })),
   hourly: {
     time: hours.map((i) => `2026-08-16T${String(i).padStart(2, "0")}:00`),

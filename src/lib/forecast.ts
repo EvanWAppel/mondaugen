@@ -19,6 +19,10 @@ export interface DailyForecast {
   precipitationProbabilityMax: number | null;
   /** WMO weather interpretation code. */
   weatherCode: number;
+  /** Local sunrise timestamp ("2026-09-26T06:52"), or null when unreported. */
+  sunrise: string | null;
+  /** Local sunset timestamp, or null when unreported. */
+  sunset: string | null;
 }
 
 /**
@@ -70,11 +74,14 @@ export interface Forecast {
   unit: TemperatureUnit;
   /** Present conditions, or null when unavailable. */
   current: CurrentConditions | null;
+  /** Location UTC offset (seconds), for computing location-local "now". */
+  utcOffsetSeconds: number;
   days: DailyForecast[];
   hourly: HourlyForecast;
 }
 
 interface ForecastResponse {
+  utc_offset_seconds?: number;
   current?: {
     temperature_2m?: number;
     apparent_temperature?: number;
@@ -90,6 +97,8 @@ interface ForecastResponse {
     precipitation_sum?: (number | null)[];
     precipitation_probability_max?: (number | null)[];
     weather_code?: number[];
+    sunrise?: string[];
+    sunset?: string[];
   };
   hourly?: {
     time?: string[];
@@ -126,7 +135,7 @@ export async function fetchForecast(
   url.searchParams.set("longitude", String(location.longitude));
   url.searchParams.set(
     "daily",
-    "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code",
+    "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code,sunrise,sunset",
   );
   url.searchParams.set(
     "hourly",
@@ -168,6 +177,8 @@ export async function fetchForecast(
     precipitationProbabilityMax:
       daily.precipitation_probability_max?.[i] ?? null,
     weatherCode: daily.weather_code![i],
+    sunrise: daily.sunrise?.[i] ?? null,
+    sunset: daily.sunset?.[i] ?? null,
   }));
 
   const h = data.hourly;
@@ -213,5 +224,11 @@ export async function fetchForecast(
         }
       : null;
 
-  return { unit, current, days, hourly };
+  return {
+    unit,
+    current,
+    utcOffsetSeconds: data.utc_offset_seconds ?? 0,
+    days,
+    hourly,
+  };
 }
