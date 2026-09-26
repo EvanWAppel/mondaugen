@@ -143,9 +143,10 @@ self-contained, highest visual return). Each group is largely independent.
 - [x] **QA-05** PWA + offline. (Done — `app/manifest.ts`, `public/icon.svg`,
   a conservative network-first `public/sw.js` + prod-only registration, and an
   offline **last-forecast cache** (`lastForecast.ts`, tested) that shows the saved
-  forecast with a banner when the live fetch fails. **Note:** install prompt / SW
-  runtime behavior needs a browser to confirm, and some browsers want PNG 192/512
-  icons for the install criteria — an SVG icon ships today.)
+  forecast with a banner when the live fetch fails. PNG **192/512 install icons**
+  now generated via `next/og` (`/icon-192.png`, `/icon-512.png`) alongside the SVG
+  favicon, so the manifest meets install criteria. **Note:** install prompt / SW
+  runtime behavior still wants a browser to confirm.)
 
 ## Later (out of scope — see PRD §7)
 
