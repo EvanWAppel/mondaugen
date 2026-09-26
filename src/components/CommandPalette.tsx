@@ -7,6 +7,7 @@ import {
   toggleFavorite,
   useFavorites,
 } from "@/lib/favoritesStore";
+import { useDialogA11y } from "@/lib/useDialogA11y";
 import { locationLabel, type Location } from "@/lib/types";
 
 interface CommandPaletteProps {
@@ -33,17 +34,14 @@ export default function CommandPalette({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [highlight, setHighlight] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const favorites = useFavorites();
 
   // The visible, selectable list: search results when querying, else favorites.
   const items = query.trim() ? results : favorites;
 
-  // The palette mounts fresh each time it opens (parent renders it only when
-  // open), so state starts clean — just focus the input.
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  // Focus in, trap Tab, Escape to close, restore focus to the opener on close.
+  useDialogA11y(dialogRef, onClose);
 
   // Debounced geocoding search (mirrors LocationSearch; errors surface, FR-6).
   useEffect(() => {
@@ -85,10 +83,7 @@ export default function CommandPalette({
   }
 
   function onKeyDown(event: React.KeyboardEvent) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      onClose();
-    } else if (event.key === "ArrowDown") {
+    if (event.key === "ArrowDown") {
       event.preventDefault();
       setHighlight((h) => Math.min(h + 1, Math.max(0, items.length - 1)));
     } else if (event.key === "ArrowUp") {
@@ -108,17 +103,18 @@ export default function CommandPalette({
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className="palette glass"
         role="dialog"
         aria-modal="true"
         aria-label="Search locations"
+        tabIndex={-1}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >
         <div className="palette-input">
           <span aria-hidden="true" className="search-icon">⌕</span>
           <input
-            ref={inputRef}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

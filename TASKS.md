@@ -125,16 +125,27 @@ self-contained, highest visual return). Each group is largely independent.
 
 ### QUALITY — proof it's senior (Idea 4 · NFR-5..NFR-8)
 
-- [ ] **QA-01** Accessibility pass: keyboard nav, visible focus, SR labels, verify
-  **WCAG AA contrast** on the dark glass theme.
-- [ ] **QA-02** Performance proof: confirm ~100 Lighthouse mobile; keep map/charts
-  lazy; document the result.
-- [ ] **QA-03** Playwright E2E smoke: load → default forecast → switch location →
-  radar renders.
-- [ ] **QA-04** CI: run `test` + `lint` + `build` on every push/PR (GitHub
-  Actions); optional status badge in the README.
-- [ ] **QA-05** PWA: manifest + service worker (installable) and cache the last
-  successful forecast for an offline view (NFR-7).
+- [x] **QA-01** Accessibility pass: keyboard nav, visible focus, SR labels, AA
+  contrast. (Done — raised `--muted`/`--faint` for AA on the dark gradients;
+  shared `useDialogA11y` hook gives the palette + colophon focus-in, Tab-trap,
+  Escape, and focus-restore; controls already carry aria labels/roles. Full
+  axe/Lighthouse a11y score still wants a browser run — see QA-02.)
+- [~] **QA-02** Performance proof: ~100 Lighthouse mobile. (Practices in place —
+  map + charts lazy-loaded, no ad/tracker requests, static prerender. **The score
+  itself needs a browser/Lighthouse run** (not possible from here); verify in
+  browser or add Lighthouse-CI.)
+- [x] **QA-03** Playwright E2E smoke. (Done — `@playwright/test` + `playwright.config.ts`
+  + `e2e/smoke.spec.ts` (shell, palette open/close, colophon); `npm run test:e2e`.
+  Specs compile/list clean; the browser run happens in CI, not locally, per the
+  no-local-browser guardrail.)
+- [x] **QA-04** CI: `test` + `lint` + `build` + e2e on every push/PR. (Done —
+  `.github/workflows/ci.yml` with a `checks` job and a Playwright `e2e` job.)
+- [x] **QA-05** PWA + offline. (Done — `app/manifest.ts`, `public/icon.svg`,
+  a conservative network-first `public/sw.js` + prod-only registration, and an
+  offline **last-forecast cache** (`lastForecast.ts`, tested) that shows the saved
+  forecast with a banner when the live fetch fails. **Note:** install prompt / SW
+  runtime behavior needs a browser to confirm, and some browsers want PNG 192/512
+  icons for the install criteria — an SVG icon ships today.)
 
 ## Later (out of scope — see PRD §7)
 

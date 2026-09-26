@@ -2,8 +2,9 @@
 
 :root {
   --ink: #f2f6fc;
-  --muted: rgba(233, 240, 250, 0.64);
-  --faint: rgba(233, 240, 250, 0.42);
+  /* Raised for WCAG AA contrast on the dark gradients (QA-01). */
+  --muted: rgba(233, 240, 250, 0.74);
+  --faint: rgba(233, 240, 250, 0.58);
   --glass: rgba(255, 255, 255, 0.07);
   --glass-strong: rgba(255, 255, 255, 0.11);
   --glass-hover: rgba(255, 255, 255, 0.14);
@@ -916,6 +917,26 @@ input:focus-visible {
   text-decoration: underline;
   white-space: nowrap;
   color: inherit;
+}
+
+.stale-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  background: rgba(124, 198, 255, 0.1);
+  border: 1px solid rgba(124, 198, 255, 0.28);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.stale-banner button {
+  text-decoration: underline;
+  white-space: nowrap;
+  color: var(--ink);
 }
 
 .skeleton {

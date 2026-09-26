@@ -17,6 +17,7 @@ import {
   sunProgress,
 } from "@/lib/sun";
 import { favoriteKey, toggleFavorite, useFavorites } from "@/lib/favoritesStore";
+import { loadForecast, saveForecast } from "@/lib/lastForecast";
 import WeatherIcon from "./WeatherIcon";
 import type { Location } from "@/lib/types";
 
@@ -65,6 +66,8 @@ export default function ForecastPanel({
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // When set, we're showing a saved forecast because the live fetch failed.
+  const [stale, setStale] = useState<number | null>(null);
   const favorites = useFavorites();
   const saved = favorites.some((f) => favoriteKey(f) === favoriteKey(location));
   // Location-local "now" for the sun arc, refreshed each minute (kept out of
@@ -90,11 +93,23 @@ export default function ForecastPanel({
           { unit, signal: controller.signal },
         );
         setForecast(result);
+        setStale(null);
         setSelected(0);
+        saveForecast(latitude, longitude, unit, result, Date.now());
       } catch (err) {
         if (controller.signal.aborted) return;
-        // Surface the failure — no silent blank cards (FR-6).
-        setError(err instanceof Error ? err.message : "Couldn't load forecast.");
+        // Offline/failed: fall back to the last saved forecast if we have one
+        // (NFR-7), otherwise surface the failure — no silent blank cards (FR-6).
+        const cached = loadForecast(latitude, longitude, unit);
+        if (cached) {
+          setForecast(cached.forecast);
+          setStale(cached.savedAt);
+          setSelected(0);
+        } else {
+          setError(
+            err instanceof Error ? err.message : "Couldn't load forecast.",
+          );
+        }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -217,6 +232,14 @@ export default function ForecastPanel({
           </div>
         )}
       </section>
+
+      {stale != null && (
+        <p className="stale-banner" role="status">
+          Offline — showing the forecast saved{" "}
+          {new Date(stale).toLocaleString()}.
+          <button onClick={() => setRetry((n) => n + 1)}>Refresh ↻</button>
+        </p>
+      )}
 
       {error ? (
         <section role="alert" className="banner-error">

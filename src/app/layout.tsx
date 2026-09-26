@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
   title: "atmosphere — weather",
   description:
     "A calm, ad-free personal weather app: a 10-day forecast and live radar. No trackers.",
+  icons: { icon: "/icon.svg" },
   openGraph: {
     title: "atmosphere — weather",
     description:
@@ -38,6 +40,10 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0a0e13",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -47,6 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <Footer />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
