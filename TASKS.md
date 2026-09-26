@@ -148,10 +148,24 @@ self-contained, highest visual return). Each group is largely independent.
   favicon, so the manifest meets install criteria. **Note:** install prompt / SW
   runtime behavior still wants a browser to confirm.)
 
+## WIND — streams on the radar map (FR-15)
+
+- [x] **WIND-01** Wind grid client: viewport lattice, Open-Meteo current 10 m
+  speed/direction → u/v, bilinear sample, particle step. Test-first. (Done —
+  `src/lib/wind.ts`.)
+- [x] **WIND-02** Map control: Radar (default) / Both / Wind. Wind hides the
+  timeline and the radar tiles; Both dims the radar and keeps the scrubber.
+  No wind request until wind is turned on. (Done — `MapLayerToggle` +
+  `RadarMap`.)
+- [x] **WIND-03** Particle overlay on the existing MapLibre map, geographic
+  trails (no screen-space fade), speed legend in the current unit, "Wind now"
+  label. Reduced motion draws static arrows. Failures surface and leave the
+  radar up. (Done — `WindOverlay`.)
+
 ## Later (out of scope — see PRD §7)
 
 - [ ] Standalone hourly forecast table / HOURLY tab.
 - [ ] Severe-weather alerts.
 - [ ] Historical data; shareable per-location permalinks (beyond the OG image).
-- [ ] Extra map layers (satellite, temperature, wind).
+- [ ] Extra map layers (satellite, temperature).
 - [ ] Any account / cross-device sync of favorites.

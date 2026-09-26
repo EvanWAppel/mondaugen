@@ -129,7 +129,7 @@ export default function WeatherApp() {
         <section className="radar-section" aria-label="Radar map">
           <div className="section-head">
             <h2>Live radar</h2>
-            <span className="eyebrow">Precipitation · past &amp; near-term</span>
+            <span className="eyebrow">Precipitation and wind</span>
           </div>
           <div className="glass radar-card">
             <DeferUntilVisible minHeight={480}>

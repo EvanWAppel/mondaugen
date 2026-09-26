@@ -52,7 +52,9 @@ Fast first paint, works on a phone.
   table / HOURLY tab, historical data, Weather Stations / PWS network,
   severe-weather alerts pages, news, webcams, air quality, pollen, "Wundermap"
   layer soup, etc. (Note: hourly data shown as **trend charts within the 10-day
-  forecast** is in scope — see FR-4 and DECISIONS.md 2026-08-22.)
+  forecast** is in scope — see FR-4 and DECISIONS.md 2026-08-22. **Current-wind
+  streams on the radar map** are in scope — see FR-15 and DECISIONS.md
+  2026-09-26. Satellite and temperature layers are still not.)
 - **User accounts, server-side sync, or notifications.** (Client-side favorite
   locations in `localStorage` are now in scope — see FR-11 — but there is still
   no account and nothing syncs across devices.)
@@ -73,7 +75,7 @@ Fast first paint, works on a phone.
 
 | Dimension | Decision |
 |---|---|
-| Scope | **Two core features**: 10-day forecast + interactive radar map. The v0.3 enhancements (§6.5) are polish, presentation, and *conveniences around those two* (animated backdrop, local favorites, ⌘K, sunrise/sunset, social image) — not new data features like hourly tables or alerts, which stay out. |
+| Scope | **Two core features**: 10-day forecast + interactive radar map, plus **current-wind streams** on that map (FR-15). The v0.3 enhancements (§6.5) are polish, presentation, and *conveniences around those two* (animated backdrop, local favorites, ⌘K, sunrise/sunset, social image). Hourly tables, alerts, and other map layers (satellite, temperature) stay out. |
 | Forecast data | **Open-Meteo** (`api.open-meteo.com`) — free, no API key, global, up to 16-day daily. We display 10. |
 | Geocoding | **Open-Meteo Geocoding API** (`geocoding-api.open-meteo.com`) for name → lat/lon search. |
 | Radar tiles | **RainViewer** public tile API — free, no key; past + nowcast frames with timestamps. |
@@ -118,6 +120,13 @@ Fast first paint, works on a phone.
   timestamp (past → nowcast).
 - **FR-9** Map and forecast stay in sync with the active location — changing the
   location recenters the map and refetches the forecast.
+- **FR-15** The map can show **current 10 m wind as animated streams** over the
+  visible area, from the same keyless Open-Meteo forecast (no new provider). A
+  control selects **Radar** (default), **Wind**, or **Both**. Wind does not
+  follow the precipitation timeline: Wind mode hides the timeline, and Both
+  dims the radar and notes that the scrubber moves precipitation only. Motion
+  stops under `prefers-reduced-motion` and draws static arrows instead. A wind
+  fetch failure is a readable error and does not take down the radar.
 
 ### 6.4 Non-functional
 - **NFR-1** Ad-free and tracker-free. No third-party ad/analytics scripts.
@@ -183,7 +192,8 @@ the five ideas agreed on 2026-09-26.
 Still out (capture in `TASKS.md` "Later", don't build now): a standalone hourly
 table / HOURLY tab, severe-weather alerts, historical data, shareable
 per-location permalinks (beyond the OG image), additional map layers (satellite,
-temperature, wind), and any account/server-side sync of favorites.
+temperature), and any account/server-side sync of favorites. Wind streams are
+in scope (FR-15); timeline-synced wind, gusts, and other heights are not.
 
 ## 8. Success Criteria
 

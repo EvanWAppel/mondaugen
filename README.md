@@ -27,7 +27,8 @@ like something you'd open every morning — fast, quiet, and yours.
   wind, rain, sunrise/sunset with a day-progress arc), a glass day-card row, and
   hourly trend charts.
 - **Interactive radar** — animated RainViewer precipitation over a MapLibre map,
-  with a play/scrub timeline (past → near-term nowcast).
+  with a play/scrub timeline (past → near-term nowcast). Optional current-wind
+  streams (Radar / Both / Wind) from the same Open-Meteo forecast.
 - **Sky-reactive backdrop** — an animated gradient (clear/cloud/rain/snow/storm/
   fog, day vs night) with ambient motion, gated behind `prefers-reduced-motion`.
 - **Favorites + ⌘K** — save locations locally and jump between them from a
@@ -39,7 +40,7 @@ like something you'd open every morning — fast, quiet, and yours.
 
 - **Next.js (App Router) + TypeScript + Tailwind**, deployed on **Vercel**.
 - **Keyless by design** — every data source is public and free, no secrets:
-  - [Open-Meteo](https://open-meteo.com/) — forecast + geocoding
+  - [Open-Meteo](https://open-meteo.com/) — forecast, geocoding, and the wind grid
   - [RainViewer](https://www.rainviewer.com/api.html) — radar tiles
   - [MapLibre GL](https://maplibre.org/) + [OpenStreetMap](https://www.openstreetmap.org/)
     — base map

@@ -2,6 +2,29 @@
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
 
+## 2026-09-26 — Wind streams on the radar map
+
+**Decision:** The radar map can show **current 10 m wind as animated particle
+streams** (FR-15). A control selects Radar (default), Wind, or Both. Wind is
+"now" only — it does not follow the precipitation scrubber.
+
+**Why:** Requested feature. Streams are the readable form of wind on a map
+(where it is going, not a table of degrees). Keeping it on the existing map,
+off by default, doesn't add a third product surface.
+
+**Locked decisions changed:** PRD §7 and the v0.3 decision listed "extra map
+layers (satellite, temperature, wind)" as out. **Wind streams are now in.**
+Satellite and temperature layers stay out.
+
+**Data:** Same keyless Open-Meteo `/v1/forecast` call, sampled on a lattice
+over the visible map (`current=wind_speed_10m,wind_direction_10m`, m/s). No
+new provider, no secret. Rejected: `@openmeteo/weather-map-layer` (colored
+raster + arrows, not streams; GPL-2.0; wants cross-origin isolation headers
+that fight the OSM tiles) and a NOAA GRIB decode (a proxy, not a thin client).
+
+**Still out:** timeline-synced wind, gusts, wind above 10 m, persisting the
+layer choice, satellite, temperature.
+
 ## 2026-09-26 — Portfolio-enhancement wave (v0.3): expand scope for polish + product depth
 
 **Decision:** Add a wave of enhancements to sharpen the app as a portfolio piece
@@ -24,9 +47,11 @@ that while staying true to the app's ethos.
   backend/database" decision: this is a build/render artifact, **not** a data
   backend — the app still fetches weather straight from the public keyless APIs.
 
-**Still out (unchanged):** standalone hourly table/tab, severe-weather alerts,
-historical data, extra map layers, per-location shareable permalinks, and any
-account or cross-device sync of favorites.
+**Still out (unchanged at the time; wind streams were added later the same day):**
+standalone hourly table/tab, severe-weather alerts, historical data, extra map
+layers, per-location shareable permalinks, and any account or cross-device sync
+of favorites. See the wind-streams entry above — satellite and temperature
+layers stay out.
 
 **Data:** All new data (sunrise/sunset) comes from the existing keyless Open-Meteo
 `/v1/forecast` daily block. No new provider, no secret. The keyless/ad-free/
