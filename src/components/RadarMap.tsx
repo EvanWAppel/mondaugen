@@ -13,7 +13,9 @@ import {
   type RadarFrame,
 } from "@/lib/radar";
 import type { Location } from "@/lib/types";
+import MapLayerToggle, { type MapLayerMode } from "./MapLayerToggle";
 import RadarTimeline from "./RadarTimeline";
+import WindOverlay from "./WindOverlay";
 
 // Keyless OSM raster base map (no Mapbox token) — see PRD §5.
 const OSM_STYLE: StyleSpecification = {
@@ -30,7 +32,20 @@ const OSM_STYLE: StyleSpecification = {
 };
 
 const RADAR_OPACITY = 0.7;
+const RADAR_OPACITY_BOTH = 0.35;
 const PLAYBACK_MS = 600;
+
+function radarOpacity(mode: MapLayerMode): number {
+  if (mode === "wind") return 0;
+  if (mode === "both") return RADAR_OPACITY_BOTH;
+  return RADAR_OPACITY;
+}
+
+function mapLabel(mode: MapLayerMode): string {
+  if (mode === "wind") return "Wind map";
+  if (mode === "both") return "Radar and wind map";
+  return "Radar map";
+}
 // RainViewer radar tiles are served up to zoom 7; beyond that the API returns a
 // "Zoom Level Not Supported" placeholder. Cap the source so MapLibre overzooms
 // (scales) the z7 tiles instead of requesting unavailable ones.
@@ -56,6 +71,9 @@ export default function RadarMap({ location }: RadarMapProps) {
   const [current, setCurrent] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<MapLayerMode>("radar");
+  const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null);
+  const [windError, setWindError] = useState<string | null>(null);
 
   // Initialize the base map once.
   useEffect(() => {
@@ -72,6 +90,7 @@ export default function RadarMap({ location }: RadarMapProps) {
     // Surface MapLibre errors instead of failing silently (FR-6).
     map.on("error", (e) => console.error("[radar-map] maplibre error", e));
     mapRef.current = map;
+    setMapInstance(map);
 
     return () => {
       map.remove();
@@ -143,36 +162,49 @@ export default function RadarMap({ location }: RadarMapProps) {
           map.setPaintProperty(
             layerId(i),
             "raster-opacity",
-            i === current ? RADAR_OPACITY : 0,
+            i === current ? radarOpacity(mode) : 0,
           );
         }
       });
     };
     if (map.isStyleLoaded()) apply();
     else map.once("load", apply);
-  }, [current, frames]);
+  }, [current, frames, mode]);
 
-  // Advance frames while playing.
+  // Advance frames while playing. Wind-only has no timeline, so don't keep
+  // stepping precipitation behind it.
   useEffect(() => {
-    if (!playing || frames.length === 0) return;
+    if (!playing || frames.length === 0 || mode === "wind") return;
     const timer = setInterval(() => {
       setCurrent((c) => (c + 1) % frames.length);
     }, PLAYBACK_MS);
     return () => clearInterval(timer);
-  }, [playing, frames.length]);
+  }, [playing, frames.length, mode]);
+
+  const selectMode = (next: MapLayerMode) => {
+    setMode(next);
+    if (next === "radar") setWindError(null);
+    if (next === "wind") setPlaying(false);
+  };
 
   return (
     <div className="flex flex-col gap-3">
-      <div
-        ref={containerRef}
-        aria-label="Radar map"
-        className="h-[420px] w-full overflow-hidden rounded-xl"
-      />
+      <div className="radar-stage">
+        <div
+          ref={containerRef}
+          aria-label={mapLabel(mode)}
+          className="h-full w-full"
+        />
+        <MapLayerToggle mode={mode} onChange={selectMode} />
+        {mapInstance && mode !== "radar" && (
+          <WindOverlay map={mapInstance} mode={mode} onError={setWindError} />
+        )}
+      </div>
       {error ? (
         <p role="alert" className="banner-error" style={{ margin: 0 }}>
           {error}
         </p>
-      ) : (
+      ) : mode !== "wind" ? (
         <RadarTimeline
           frames={frames}
           current={current}
@@ -180,6 +212,11 @@ export default function RadarMap({ location }: RadarMapProps) {
           onScrub={setCurrent}
           onTogglePlay={() => setPlaying((p) => !p)}
         />
+      ) : null}
+      {windError && (
+        <p role="alert" className="banner-error" style={{ margin: 0 }}>
+          {windError}
+        </p>
       )}
     </div>
   );

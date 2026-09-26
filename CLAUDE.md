@@ -21,7 +21,8 @@ almost certainly "no, that's out of scope."
 
 ## Data sources (all keyless — keep it that way)
 
-- **Forecast:** Open-Meteo — `https://api.open-meteo.com/v1/forecast`
+- **Forecast and wind grid:** Open-Meteo — `https://api.open-meteo.com/v1/forecast`
+  (wind streams sample `wind_speed_10m` / `wind_direction_10m` over the visible map)
 - **Geocoding:** Open-Meteo — `https://geocoding-api.open-meteo.com/v1/search`
 - **Radar tiles + frame index:** RainViewer — `https://api.rainviewer.com/`
 - **Base map:** MapLibre GL + OpenStreetMap raster tiles.

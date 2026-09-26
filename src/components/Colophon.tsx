@@ -7,7 +7,7 @@ const SOURCES = [
   {
     label: "Open-Meteo",
     href: "https://open-meteo.com/",
-    role: "forecast + geocoding",
+    role: "forecast, geocoding, and wind",
   },
   {
     label: "RainViewer",
