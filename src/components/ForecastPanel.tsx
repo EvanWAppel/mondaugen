@@ -10,6 +10,14 @@ import {
   type TemperatureUnit,
 } from "@/lib/forecast";
 import { describeWeatherCode, weatherSky, type Sky } from "@/lib/weatherCodes";
+import {
+  formatClock,
+  isoTimeToMinutes,
+  localNowMinutes,
+  sunProgress,
+} from "@/lib/sun";
+import { favoriteKey, toggleFavorite, useFavorites } from "@/lib/favoritesStore";
+import { loadForecast, saveForecast } from "@/lib/lastForecast";
 import WeatherIcon from "./WeatherIcon";
 import type { Location } from "@/lib/types";
 
@@ -58,6 +66,19 @@ export default function ForecastPanel({
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // When set, we're showing a saved forecast because the live fetch failed.
+  const [stale, setStale] = useState<number | null>(null);
+  const favorites = useFavorites();
+  const saved = favorites.some((f) => favoriteKey(f) === favoriteKey(location));
+  // Location-local "now" for the sun arc, refreshed each minute (kept out of
+  // render so it stays a pure function of props/state).
+  const [nowEpoch, setNowEpoch] = useState(0);
+  useEffect(() => {
+    const tick = () => setNowEpoch(Date.now());
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const { latitude, longitude } = location;
 
@@ -72,11 +93,23 @@ export default function ForecastPanel({
           { unit, signal: controller.signal },
         );
         setForecast(result);
+        setStale(null);
         setSelected(0);
+        saveForecast(latitude, longitude, unit, result, Date.now());
       } catch (err) {
         if (controller.signal.aborted) return;
-        // Surface the failure — no silent blank cards (FR-6).
-        setError(err instanceof Error ? err.message : "Couldn't load forecast.");
+        // Offline/failed: fall back to the last saved forecast if we have one
+        // (NFR-7), otherwise surface the failure — no silent blank cards (FR-6).
+        const cached = loadForecast(latitude, longitude, unit);
+        if (cached) {
+          setForecast(cached.forecast);
+          setStale(cached.savedAt);
+          setSelected(0);
+        } else {
+          setError(
+            err instanceof Error ? err.message : "Couldn't load forecast.",
+          );
+        }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -103,11 +136,35 @@ export default function ForecastPanel({
       ? Math.round(today.tempMax)
       : null;
 
+  // Day-progress arc: where the sun sits between today's sunrise and sunset,
+  // in the location's local time (FR-12).
+  const sunriseMin = isoTimeToMinutes(today?.sunrise ?? null);
+  const sunsetMin = isoTimeToMinutes(today?.sunset ?? null);
+  const sun =
+    forecast && nowEpoch
+      ? sunProgress(
+          sunriseMin,
+          sunsetMin,
+          localNowMinutes(forecast.utcOffsetSeconds, nowEpoch),
+        )
+      : null;
+
   return (
     <>
       <section className="hero glass" aria-label="Current conditions" aria-busy={loading}>
         <div className="hero-place">
-          <h1>{location.name}</h1>
+          <div className="hero-place-head">
+            <h1>{location.name}</h1>
+            <button
+              type="button"
+              className={saved ? "save-star saved" : "save-star"}
+              aria-pressed={saved}
+              aria-label={saved ? "Remove from favorites" : "Save to favorites"}
+              onClick={() => toggleFavorite(location)}
+            >
+              {saved ? "★" : "☆"}
+            </button>
+          </div>
           <p>
             {[location.admin1, location.country].filter(Boolean).join(", ") ||
               "Your selected location"}
@@ -159,7 +216,30 @@ export default function ForecastPanel({
             </strong>
           </li>
         </ul>
+
+        {!error && sunriseMin != null && sunsetMin != null && (
+          <div className="hero-sun">
+            <span className="sun-end">
+              <span aria-hidden="true">☀</span> {formatClock(sunriseMin)}
+            </span>
+            <SunArc
+              progress={sun?.progress ?? 0}
+              daytime={sun?.isDaytime ?? false}
+            />
+            <span className="sun-end">
+              {formatClock(sunsetMin)} <span aria-hidden="true">☾</span>
+            </span>
+          </div>
+        )}
       </section>
+
+      {stale != null && (
+        <p className="stale-banner" role="status">
+          Offline — showing the forecast saved{" "}
+          {new Date(stale).toLocaleString()}.
+          <button onClick={() => setRetry((n) => n + 1)}>Refresh ↻</button>
+        </p>
+      )}
 
       {error ? (
         <section role="alert" className="banner-error">
@@ -233,6 +313,35 @@ export default function ForecastPanel({
         )
       )}
     </>
+  );
+}
+
+/** A semicircular arc with the sun marker placed by daylight progress. */
+function SunArc({ progress, daytime }: { progress: number; daytime: boolean }) {
+  const angle = Math.PI * (1 - progress); // PI at sunrise → 0 at sunset
+  const x = 50 + 45 * Math.cos(angle);
+  const y = 35 - 30 * Math.sin(angle);
+  return (
+    <svg
+      className="sun-arc"
+      viewBox="0 0 100 40"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label={`Daylight ${Math.round(progress * 100)}% elapsed`}
+    >
+      <path
+        className="sun-arc-track"
+        d="M5 35 A 45 30 0 0 1 95 35"
+        fill="none"
+      />
+      <line className="sun-arc-base" x1="0" y1="35.5" x2="100" y2="35.5" />
+      <circle
+        className={daytime ? "sun-arc-dot" : "sun-arc-dot night"}
+        cx={x}
+        cy={y}
+        r="4"
+      />
+    </svg>
   );
 }
 

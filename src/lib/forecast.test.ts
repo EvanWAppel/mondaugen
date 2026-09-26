@@ -12,6 +12,8 @@ function payload(days = 10) {
       precipitation_sum: range.map((i) => (i === 2 ? null : 0)),
       precipitation_probability_max: range.map((i) => (i === 1 ? null : i * 10)),
       weather_code: range.map(() => 3),
+      sunrise: range.map((i) => `2026-08-${String(16 + i).padStart(2, "0")}T06:00`),
+      sunset: range.map((i) => `2026-08-${String(16 + i).padStart(2, "0")}T18:00`),
     },
     hourly: {
       time: hours.map((i) => `hour-${i}`),
@@ -58,6 +60,8 @@ describe("fetchForecast", () => {
       precipitationSum: 0,
       precipitationProbabilityMax: 0,
       weatherCode: 3,
+      sunrise: "2026-08-16T06:00",
+      sunset: "2026-08-16T18:00",
     });
   });
 

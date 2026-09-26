@@ -1,3 +1,5 @@
+import Colophon from "./Colophon";
+
 const SOURCES = [
   { label: "Open-Meteo", href: "https://open-meteo.com/" },
   { label: "RainViewer", href: "https://www.rainviewer.com/" },
@@ -11,6 +13,7 @@ export default function Footer() {
   return (
     <footer className="site-footer">
       <span className="footer-brand">atmosphere</span>
+      <Colophon />
       <p>
         Data from{" "}
         {SOURCES.map((source, i) => (

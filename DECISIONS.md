@@ -2,6 +2,39 @@
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
 
+## 2026-09-26 — Portfolio-enhancement wave (v0.3): expand scope for polish + product depth
+
+**Decision:** Add a wave of enhancements to sharpen the app as a portfolio piece
+(PRD §6.5/§6.6, FR-10..FR-14, NFR-5..NFR-8), grouped as five ideas: (1) animated
+atmosphere, (2) dynamic social image, (3) presentation/colophon + README case
+study, (4) quality proof (a11y, Lighthouse, E2E, CI), (5) product depth
+(⌘K command palette + favorite locations, sunrise/sunset arc, installable PWA +
+offline last-forecast).
+
+**Why:** The redesign gives the "wow on load"; a portfolio piece also has to read
+as senior craft up close and tell a story about how the author thinks. These do
+that while staying true to the app's ethos.
+
+**Locked decisions changed — these were previously out and are now IN scope:**
+- **Favorite locations** in `localStorage`. Former Non-Goal was "saved locations
+  sync"; the distinction kept: **local favorites yes, accounts / server-side sync
+  no.** ⌘K command palette rides on the same store (FR-11).
+- **PWA / offline** (NFR-7) and **saved multi-location** — were under §7 "Later".
+- A **Next.js route for the OG image** (FR-13). Reconciled against the "no
+  backend/database" decision: this is a build/render artifact, **not** a data
+  backend — the app still fetches weather straight from the public keyless APIs.
+
+**Still out (unchanged):** standalone hourly table/tab, severe-weather alerts,
+historical data, extra map layers, per-location shareable permalinks, and any
+account or cross-device sync of favorites.
+
+**Data:** All new data (sunrise/sunset) comes from the existing keyless Open-Meteo
+`/v1/forecast` daily block. No new provider, no secret. The keyless/ad-free/
+tracker-free guarantees (NFR-1) are unchanged.
+
+**Build order:** Start with idea 1 (animated atmosphere) — most self-contained,
+highest visual return, purely visual.
+
 ## 2026-09-26 — Reframe as a personal weather app; dark-glass sky-reactive UI
 
 **Decision:** The product is no longer framed as an *ad-free Weather Underground

@@ -63,12 +63,94 @@ assume earlier ones.
   added to the project but **deferred** — it still needs a `weather` DNS record
   at Wix (`CNAME weather → cname.vercel-dns.com`), so we use the vercel.app URL
   for now.)
-- [ ] **SHIP-03** Flip `status = "wip"` (then `"live"`) in the portfolio
-  `projects.toml` and add the row to the portfolio README table.
+- [ ] **SHIP-03** Flip `status` to `"live"` in the portfolio `projects.toml` and
+  update the portfolio README table row. (Edits staged in the enki repo
+  2026-09-26 — status→live + personal-app description; commit pending review.
+  Custom domain `weather.evanappel.me` deferred until DNS is set up.)
 
-## Later (out of MVP scope — see PRD §7)
+## v0.3 Portfolio enhancements (see PRD §6.5/§6.6, DECISIONS 2026-09-26)
 
-- [ ] Hourly forecast detail.
+Five ideas agreed 2026-09-26. Build order starts with ATMOSPHERE (most
+self-contained, highest visual return). Each group is largely independent.
+
+### ATMOSPHERE — animated sky (Idea 1 · FR-10)
+
+- [x] **ATM-01** Crossfade between sky states instead of hard-snapping: two
+  stacked gradient layers, fade opacity on change. Drive from the same
+  `weatherSky` category already reported up to `WeatherApp`. (Done — new
+  `SkyBackdrop` component stacks a layer per state, fades the newest in via a
+  `skyIn` CSS animation, and prunes occluded layers on `animationend`.)
+- [x] **ATM-02** Condition-appropriate ambient motion: drifting clouds, rain
+  streaks, night starfield, falling snow, sun/glow leaning toward the horizon.
+  CSS and/or a lightweight canvas layer — no new runtime data source. (Done —
+  pure-CSS `.fx-*` effects per sky, incl. storm lightning + fog drift. No canvas,
+  no JS loop.)
+- [x] **ATM-03** Gate **all** motion behind `prefers-reduced-motion` (static
+  gradient fallback = today's behavior). Keep it off the critical render path so
+  FCP/NFR-3 is unaffected. (Done — reduced-motion collapses to a single static
+  layer and the global reduced-motion rule freezes every effect; effects are
+  CSS-only so they're off the JS critical path. Lighthouse cross-check tracked
+  under QA-02.)
+
+### PRODUCT — favorites, command palette, sun times (Idea 5 · FR-11, FR-12)
+
+- [x] **FAV-01** Favorites store: save/remove favorite locations in
+  `localStorage` (no account, no sync). (Done — `favoritesStore.ts` keyed on
+  rounded coords; `useFavorites`/`toggle`/`add`/`remove`; save-star in the hero +
+  favorite chips under the top bar.)
+- [x] **FAV-02** `⌘K` / `Ctrl-K` command palette to search + switch locations and
+  jump to favorites; wraps the existing geocoding search. Keyboard-first. (Done —
+  `CommandPalette.tsx`: ⌘K toggles, arrow/Enter/Esc keys, star to favorite,
+  mounts fresh per open.)
+- [x] **SUN-01** Request Open-Meteo daily `sunrise`/`sunset` (keyless); type +
+  parse + test. (Done — added to the forecast request/type + `utc_offset_seconds`;
+  `sun.ts` helpers with tests.)
+- [x] **SUN-02** Sunrise/sunset display + day-progress arc in the hero; pairs
+  with the animated sky. (Done — `SunArc` semicircle with the sun placed by
+  location-local daylight progress, refreshed each minute.)
+
+### SHARE — social image + story (Ideas 2 & 3 · FR-13, FR-14)
+
+- [x] **OG-01** Dynamic OG image route: live card with place, current temp,
+  condition, matching sky palette. Wire `<meta>` tags for unfurls. (Done —
+  `src/app/opengraph-image.tsx` via built-in `next/og` (no dep); fetches live
+  conditions with a branded fallback; `metadataBase` + OG/Twitter meta in layout;
+  verified rendering a 1200×630 PNG.)
+- [x] **DOC-01** In-app "How it's built" / colophon panel: keyless architecture,
+  three data sources, ad-free/tracker-free stance. (Done — `Colophon.tsx` modal
+  from the footer. Note: decision log not linked — repo is private.)
+- [x] **DOC-02** Portfolio-grade repo README: "why", features, architecture,
+  keyless data sources, develop/deploy. (Done — rewrote README to the personal-app
+  framing; hero-image slot left as a comment until a screenshot is captured.)
+
+### QUALITY — proof it's senior (Idea 4 · NFR-5..NFR-8)
+
+- [x] **QA-01** Accessibility pass: keyboard nav, visible focus, SR labels, AA
+  contrast. (Done — raised `--muted`/`--faint` for AA on the dark gradients;
+  shared `useDialogA11y` hook gives the palette + colophon focus-in, Tab-trap,
+  Escape, and focus-restore; controls already carry aria labels/roles. Full
+  axe/Lighthouse a11y score still wants a browser run — see QA-02.)
+- [~] **QA-02** Performance proof: ~100 Lighthouse mobile. (Practices in place —
+  map + charts lazy-loaded, no ad/tracker requests, static prerender. **The score
+  itself needs a browser/Lighthouse run** (not possible from here); verify in
+  browser or add Lighthouse-CI.)
+- [x] **QA-03** Playwright E2E smoke. (Done — `@playwright/test` + `playwright.config.ts`
+  + `e2e/smoke.spec.ts` (shell, palette open/close, colophon); `npm run test:e2e`.
+  Specs compile/list clean; the browser run happens in CI, not locally, per the
+  no-local-browser guardrail.)
+- [x] **QA-04** CI: `test` + `lint` + `build` + e2e on every push/PR. (Done —
+  `.github/workflows/ci.yml` with a `checks` job and a Playwright `e2e` job.)
+- [x] **QA-05** PWA + offline. (Done — `app/manifest.ts`, `public/icon.svg`,
+  a conservative network-first `public/sw.js` + prod-only registration, and an
+  offline **last-forecast cache** (`lastForecast.ts`, tested) that shows the saved
+  forecast with a banner when the live fetch fails. **Note:** install prompt / SW
+  runtime behavior needs a browser to confirm, and some browsers want PNG 192/512
+  icons for the install criteria — an SVG icon ships today.)
+
+## Later (out of scope — see PRD §7)
+
+- [ ] Standalone hourly forecast table / HOURLY tab.
 - [ ] Severe-weather alerts.
-- [ ] Multi-location saved dashboard + shareable per-location permalinks.
-- [ ] Extra map layers (satellite, temperature, wind); PWA/offline.
+- [ ] Historical data; shareable per-location permalinks (beyond the OG image).
+- [ ] Extra map layers (satellite, temperature, wind).
+- [ ] Any account / cross-device sync of favorites.

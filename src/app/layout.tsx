@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,10 +14,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Resolve OG/social image URLs against the real deployment URL (Vercel sets
+// this in prod/preview); falls back to localhost in dev.
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "atmosphere — weather",
   description:
     "A calm, ad-free personal weather app: a 10-day forecast and live radar. No trackers.",
+  icons: { icon: "/icon.svg" },
+  openGraph: {
+    title: "atmosphere — weather",
+    description:
+      "A calm, ad-free personal weather app: a 10-day forecast and live radar.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "atmosphere — weather",
+    description:
+      "A calm, ad-free personal weather app: a 10-day forecast and live radar.",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0e13",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -28,6 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <Footer />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
