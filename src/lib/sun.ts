@@ -42,6 +42,43 @@ export function sunProgress(
   };
 }
 
+/** Minutes → "3h 12m", "45m", or "2h". */
+export function formatSpan(minutes: number): string {
+  const whole = Math.max(0, Math.round(minutes));
+  const hours = Math.floor(whole / 60);
+  const mins = whole % 60;
+  if (hours === 0) return `${mins}m`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
+/**
+ * What the arc should say about the next sunrise or sunset.
+ * After sunset, "sunrise" means tomorrow morning.
+ */
+export function sunStatus(
+  sunriseMin: number,
+  sunsetMin: number,
+  nowMin: number,
+): { nighttime: boolean; text: string } {
+  if (nowMin < sunriseMin) {
+    return {
+      nighttime: true,
+      text: `Sunrise in ${formatSpan(sunriseMin - nowMin)}`,
+    };
+  }
+  if (nowMin >= sunsetMin) {
+    return {
+      nighttime: true,
+      text: `Sunrise in ${formatSpan(24 * 60 - nowMin + sunriseMin)}`,
+    };
+  }
+  return {
+    nighttime: false,
+    text: `Sunset in ${formatSpan(sunsetMin - nowMin)}`,
+  };
+}
+
 /** Minutes since midnight → "6:52 AM". */
 export function formatClock(min: number | null): string {
   if (min == null) return "—";

@@ -2,6 +2,18 @@
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
 
+## 2026-09-26 — Moon phase on the night side of the sun arc
+
+**Decision:** The sun arc labels sunrise and sunset and counts down to whichever
+comes next. At night it also shows the moon phase (name and percent lit).
+
+**Why:** The times were on the diagram without saying what they were, and the
+night state was only a dim dot. Phase is what you actually want after dark.
+
+**Data:** Sunrise and sunset stay on the existing Open-Meteo daily fields. The
+moon phase is computed from the date (synodic month from the 2000-01-06 new
+moon). No new provider, no key. The lit side flips south of the equator.
+
 ## 2026-09-26 — Wind streams on the radar map
 
 **Decision:** The radar map can show **current 10 m wind as animated particle

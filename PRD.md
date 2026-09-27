@@ -171,7 +171,10 @@ the five ideas agreed on 2026-09-26.
   active location rehydrate on load.
 - **FR-12** **Sunrise / sunset.** Show sunrise and sunset times for the active
   location and a **day-progress arc**, using Open-Meteo's keyless daily
-  `sunrise`/`sunset` fields. Pairs with the animated sky (FR-10).
+  `sunrise`/`sunset` fields. The arc labels both times and counts down to the
+  next one. **At night** it also shows the **moon phase** (name and how much of
+  the disc is lit), computed from the date — no extra API. The lit side follows
+  the hemisphere of the active location. Pairs with the animated sky (FR-10).
 
 > *Idea 4 (quality proof) is non-functional — see NFR-5..NFR-8.*
 

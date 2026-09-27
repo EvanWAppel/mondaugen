@@ -10,11 +10,13 @@ import {
   type TemperatureUnit,
 } from "@/lib/forecast";
 import { describeWeatherCode, weatherSky, type Sky } from "@/lib/weatherCodes";
+import { moonLitPath, moonPhase } from "@/lib/moon";
 import {
   formatClock,
   isoTimeToMinutes,
   localNowMinutes,
   sunProgress,
+  sunStatus,
 } from "@/lib/sun";
 import { favoriteKey, toggleFavorite, useFavorites } from "@/lib/favoritesStore";
 import { loadForecast, saveForecast } from "@/lib/lastForecast";
@@ -140,14 +142,20 @@ export default function ForecastPanel({
   // in the location's local time (FR-12).
   const sunriseMin = isoTimeToMinutes(today?.sunrise ?? null);
   const sunsetMin = isoTimeToMinutes(today?.sunset ?? null);
-  const sun =
+  const nowMin =
     forecast && nowEpoch
-      ? sunProgress(
-          sunriseMin,
-          sunsetMin,
-          localNowMinutes(forecast.utcOffsetSeconds, nowEpoch),
-        )
+      ? localNowMinutes(forecast.utcOffsetSeconds, nowEpoch)
       : null;
+  const sun =
+    nowMin != null
+      ? sunProgress(sunriseMin, sunsetMin, nowMin)
+      : null;
+  const status =
+    nowMin != null && sunriseMin != null && sunsetMin != null
+      ? sunStatus(sunriseMin, sunsetMin, nowMin)
+      : null;
+  const moon = nowEpoch ? moonPhase(nowEpoch) : null;
+  const lit = moon ? Math.round(moon.illumination * 100) : 0;
 
   return (
     <>
@@ -217,18 +225,39 @@ export default function ForecastPanel({
           </li>
         </ul>
 
-        {!error && sunriseMin != null && sunsetMin != null && (
+        {!error && sunriseMin != null && sunsetMin != null && status && (
           <div className="hero-sun">
-            <span className="sun-end">
-              <span aria-hidden="true">☀</span> {formatClock(sunriseMin)}
-            </span>
-            <SunArc
-              progress={sun?.progress ?? 0}
-              daytime={sun?.isDaytime ?? false}
-            />
-            <span className="sun-end">
-              {formatClock(sunsetMin)} <span aria-hidden="true">☾</span>
-            </span>
+            <div className="sun-row">
+              <span className="sun-end">
+                <span className="sun-kicker">Sunrise</span>
+                <span>
+                  <span aria-hidden="true">☀ </span>
+                  {formatClock(sunriseMin)}
+                </span>
+              </span>
+              <SunArc
+                progress={sun?.progress ?? 0}
+                daytime={sun?.isDaytime ?? false}
+              />
+              <span className="sun-end sun-end-right">
+                <span className="sun-kicker">Sunset</span>
+                <span>
+                  {formatClock(sunsetMin)}
+                  <span aria-hidden="true"> ☀</span>
+                </span>
+              </span>
+            </div>
+            <p className="sun-note">
+              {status.nighttime && moon && (
+                <MoonGlyph phase={moon.phase} southern={latitude < 0} />
+              )}
+              <span>
+                {status.text}
+                {status.nighttime && moon
+                  ? ` · ${moon.name}, ${lit}% lit`
+                  : ""}
+              </span>
+            </p>
           </div>
         )}
       </section>
@@ -326,8 +355,7 @@ function SunArc({ progress, daytime }: { progress: number; daytime: boolean }) {
       className="sun-arc"
       viewBox="0 0 100 40"
       preserveAspectRatio="none"
-      role="img"
-      aria-label={`Daylight ${Math.round(progress * 100)}% elapsed`}
+      aria-hidden="true"
     >
       <path
         className="sun-arc-track"
@@ -341,6 +369,16 @@ function SunArc({ progress, daytime }: { progress: number; daytime: boolean }) {
         cy={y}
         r="4"
       />
+    </svg>
+  );
+}
+
+/** Lit portion of the moon. The disc behind it is the shadow. */
+function MoonGlyph({ phase, southern }: { phase: number; southern: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="moon-glyph" aria-hidden="true">
+      <circle className="moon-shadow" cx="12" cy="12" r="9" />
+      <path className="moon-lit" d={moonLitPath(phase, southern)} />
     </svg>
   );
 }

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   formatClock,
+  formatSpan,
   isoTimeToMinutes,
   localNowMinutes,
   sunProgress,
+  sunStatus,
 } from "./sun";
 
 describe("isoTimeToMinutes", () => {
@@ -47,6 +49,37 @@ describe("sunProgress", () => {
   it("returns null when times are unknown or inverted", () => {
     expect(sunProgress(null, sunset, 720)).toBeNull();
     expect(sunProgress(sunset, sunrise, 720)).toBeNull();
+  });
+});
+
+describe("sunStatus", () => {
+  const sunrise = 6 * 60;
+  const sunset = 18 * 60;
+
+  it("counts down to sunset during the day", () => {
+    expect(sunStatus(sunrise, sunset, 14 * 60 + 48)).toEqual({
+      nighttime: false,
+      text: "Sunset in 3h 12m",
+    });
+  });
+
+  it("counts down to sunrise before dawn and after dusk", () => {
+    expect(sunStatus(sunrise, sunset, 4 * 60 + 15)).toEqual({
+      nighttime: true,
+      text: "Sunrise in 1h 45m",
+    });
+    expect(sunStatus(sunrise, sunset, 22 * 60)).toEqual({
+      nighttime: true,
+      text: "Sunrise in 8h",
+    });
+  });
+});
+
+describe("formatSpan", () => {
+  it("drops a zero hours or minutes part", () => {
+    expect(formatSpan(45)).toBe("45m");
+    expect(formatSpan(120)).toBe("2h");
+    expect(formatSpan(192)).toBe("3h 12m");
   });
 });
 
