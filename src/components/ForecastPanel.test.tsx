@@ -73,6 +73,23 @@ describe("ForecastPanel", () => {
     );
     // Cards carry a weekday + month/day label (WU-style columns).
     expect(screen.getByText(/8\/16/)).toBeInTheDocument();
+    expect(screen.getByText("Sunrise")).toBeInTheDocument();
+    expect(screen.getByText("Sunset")).toBeInTheDocument();
+    expect(screen.getByText("6:00 AM")).toBeInTheDocument();
+    expect(screen.getByText("6:00 PM")).toBeInTheDocument();
+  });
+
+  it("shows the moon phase after sunset", async () => {
+    // 02:00 UTC with a -4h offset is 22:00 local, past the 18:00 sunset.
+    const now = vi.spyOn(Date, "now").mockReturnValue(Date.UTC(2026, 8, 27, 2, 0, 0));
+    fetchForecast.mockResolvedValue(FORECAST);
+    try {
+      render(<ForecastPanel location={NYC} unit="fahrenheit" />);
+      expect(await screen.findByText(/Sunrise in 8h/)).toBeInTheDocument();
+      expect(screen.getByText(/% lit/)).toBeInTheDocument();
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it("renders the trend charts alongside the cards", async () => {

@@ -533,17 +533,62 @@ input:focus-visible {
 .hero-sun {
   grid-area: sun;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
   padding-top: 18px;
   border-top: 1px solid var(--glass-border-soft);
 }
 
+.sun-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .sun-end {
-  font-size: 12px;
-  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--ink);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.sun-end-right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.sun-kicker {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.sun-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.moon-glyph {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.moon-shadow {
+  fill: rgba(233, 240, 250, 0.16);
+}
+
+.moon-lit {
+  fill: #f3e2b3;
 }
 
 .sun-arc {
