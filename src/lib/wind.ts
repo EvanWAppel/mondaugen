@@ -350,17 +350,20 @@ export function formatWindTime(time: string | null): string | null {
   return match ? `${match[1]} UTC` : null;
 }
 
-/** Cyan (calm) → white → amber (about 30 m/s), readable on the dark map. */
+/**
+ * Deep blue (calm) → teal → orange (about 30 m/s). Saturated on purpose:
+ * the basemap is a light street map, and a white trail disappears on it.
+ */
 export function speedColor(speedMs: number): string {
   const t = Math.max(0, Math.min(1, speedMs / 30));
   const mix = (from: number, to: number, amount: number) =>
     Math.round(from + (to - from) * amount);
   if (t < 0.5) {
     const amount = t / 0.5;
-    return `rgb(${mix(125, 255, amount)}, ${mix(211, 255, amount)}, ${mix(252, 255, amount)})`;
+    return `rgb(${mix(14, 20, amount)}, ${mix(116, 184, amount)}, ${mix(184, 196, amount)})`;
   }
   const amount = (t - 0.5) / 0.5;
-  return `rgb(${mix(255, 251, amount)}, ${mix(255, 191, amount)}, ${mix(255, 36, amount)})`;
+  return `rgb(${mix(20, 234, amount)}, ${mix(184, 88, amount)}, ${mix(196, 12, amount)})`;
 }
 
 /**

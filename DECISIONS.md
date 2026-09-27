@@ -25,6 +25,11 @@ that fight the OSM tiles) and a NOAA GRIB decode (a proxy, not a thin client).
 **Still out:** timeline-synced wind, gusts, wind above 10 m, persisting the
 layer choice, satellite, temperature.
 
+**Follow-up the same day:** the control was a light label drawn on top of the
+light street map, and Radar was the default, so the streams were easy to miss
+entirely. The control now sits in the dark toolbar above the map, trails use
+a dark halo and a blue-to-orange scale, and **Both** is the default.
+
 ## 2026-09-26 — Portfolio-enhancement wave (v0.3): expand scope for polish + product depth
 
 **Decision:** Add a wave of enhancements to sharpen the app as a portfolio piece

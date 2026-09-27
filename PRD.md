@@ -122,7 +122,8 @@ Fast first paint, works on a phone.
   location recenters the map and refetches the forecast.
 - **FR-15** The map can show **current 10 m wind as animated streams** over the
   visible area, from the same keyless Open-Meteo forecast (no new provider). A
-  control selects **Radar** (default), **Wind**, or **Both**. Wind does not
+  control selects **Radar**, **Wind**, or **Both** (default, so the streams are
+  visible without an extra click). Wind does not
   follow the precipitation timeline: Wind mode hides the timeline, and Both
   dims the radar and notes that the scrubber moves precipitation only. Motion
   stops under `prefers-reduced-motion` and draws static arrows instead. A wind

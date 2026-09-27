@@ -161,18 +161,29 @@ describe("RadarMap", () => {
     expect(remove).toHaveBeenCalled();
   });
 
-  it("does not fetch wind while the radar layer is selected", async () => {
+  it("shows wind streams with the radar by default", async () => {
     fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
     render(<RadarMap location={NYC} />);
-    await waitFor(() => {
-      const map = mapInstances[0] as unknown as { addLayer: ReturnType<typeof vi.fn> };
-      expect(map.addLayer).toHaveBeenCalled();
-    });
-    expect(fetchWindField).not.toHaveBeenCalled();
-    expect(screen.getByRole("radio", { name: "Radar" })).toHaveAttribute(
+    expect(screen.getByRole("radio", { name: "Both" })).toHaveAttribute(
       "aria-checked",
       "true",
     );
+    expect(screen.getByText("Loading wind…")).toBeInTheDocument();
+    await waitFor(() => expect(fetchWindField).toHaveBeenCalled());
+    expect(await screen.findByText(/Wind now · 15:00 UTC/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Play radar" })).toBeInTheDocument();
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.35]));
+  });
+
+  it("drops the wind layer when radar is selected", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByText(/Wind now/);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Radar" }));
+
+    expect(screen.queryByText(/Wind now|Loading wind/)).not.toBeInTheDocument();
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.7]));
   });
 
   it("hides the timeline and drops radar opacity in wind mode", async () => {
