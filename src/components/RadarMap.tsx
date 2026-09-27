@@ -81,6 +81,7 @@ export default function RadarMap({ location }: RadarMapProps) {
     failed: false,
     coarse: false,
     time: null,
+    speedMs: null,
   });
   const [unit] = useUnit();
 
@@ -210,15 +211,20 @@ export default function RadarMap({ location }: RadarMapProps) {
         {windNote && (
           <div className="map-toolbar-note">
             {!windStatus.loading && (
-              <p className="wind-legend">
-                <span>calm</span>
+              <p
+                className="wind-legend"
+                aria-label={`Wind speed. Blue is calm, orange is ${displaySpeed(30, unit)} ${windUnitLabel(unit)} or more.`}
+              >
+                <span>Slow</span>
                 <span className="wind-legend-bar" />
-                <span>
-                  {displaySpeed(30, unit)} {windUnitLabel(unit)}
-                </span>
+                <span>Fast</span>
               </p>
             )}
-            <p className="wind-caption">{windNote}</p>
+            <p className="wind-caption">
+              {windNote}
+              {windStatus.speedMs != null &&
+                ` · ${displaySpeed(windStatus.speedMs, unit)} ${windUnitLabel(unit)} in view`}
+            </p>
           </div>
         )}
       </div>

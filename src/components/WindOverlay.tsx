@@ -12,6 +12,7 @@ import {
   sample,
   speedColor,
   stepParticle,
+  typicalSpeedMs,
   type Bounds,
   type LngLat,
   type WindField,
@@ -20,8 +21,8 @@ import type { MapLayerMode } from "./MapLayerToggle";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const MOVE_DEBOUNCE_MS = 400;
-const TRAIL_LENGTH = 10;
-const ARROW_PX = 18;
+const TRAIL_MIN = 3;
+const TRAIL_MAX = 7;
 
 interface Particle extends LngLat {
   trail: LngLat[];
@@ -32,6 +33,8 @@ export interface WindStatus {
   failed: boolean;
   coarse: boolean;
   time: string | null;
+  /** Median speed in the current view, m/s. Null while loading or on failure. */
+  speedMs: number | null;
 }
 
 interface WindOverlayProps {
@@ -53,13 +56,21 @@ export function windCaption(
   return parts.join(" · ");
 }
 
-function strokeColored(ctx: CanvasRenderingContext2D, color: string) {
-  ctx.strokeStyle = "rgba(7, 11, 18, 0.9)";
-  ctx.lineWidth = 3.6;
+function speedAmount(speedMs: number): number {
+  return Math.max(0, Math.min(1, speedMs / 30));
+}
+
+/** Shorter, thinner strokes when the wind is light. */
+function strokeColored(ctx: CanvasRenderingContext2D, color: string, speedMs: number) {
+  const width = 0.9 + speedAmount(speedMs) * 0.9;
+  ctx.globalAlpha = 0.8;
+  ctx.strokeStyle = "rgba(7, 11, 18, 0.4)";
+  ctx.lineWidth = width + 1.1;
   ctx.stroke();
   ctx.strokeStyle = color;
-  ctx.lineWidth = 1.7;
+  ctx.lineWidth = width;
   ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -103,7 +114,7 @@ function spawn(field: WindField): LngLat | null {
 }
 
 function seedParticles(field: WindField, width: number): Particle[] {
-  const count = width > 0 && width < 600 ? 400 : 800;
+  const count = width > 0 && width < 600 ? 160 : 280;
   const particles: Particle[] = [];
   for (let i = 0; i < count; i += 1) {
     const point = spawn(field);
@@ -153,6 +164,7 @@ function drawArrows(
       };
       const wind = sample(field, origin.longitude, origin.latitude);
       if (!wind) continue;
+      const speed = Math.hypot(wind.u, wind.v);
       const start = projectPoint(map, origin);
       if (start.x < -20 || start.y < -20 || start.x > width + 20 || start.y > height + 20) {
         continue;
@@ -162,10 +174,11 @@ function drawArrows(
       const dx = tip.x - start.x;
       const dy = tip.y - start.y;
       const length = Math.hypot(dx, dy) || 1;
+      const arrowPx = 8 + speedAmount(speed) * 14;
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
-      ctx.lineTo(start.x + (dx / length) * ARROW_PX, start.y + (dy / length) * ARROW_PX);
-      strokeColored(ctx, speedColor(Math.hypot(wind.u, wind.v)));
+      ctx.lineTo(start.x + (dx / length) * arrowPx, start.y + (dy / length) * arrowPx);
+      strokeColored(ctx, speedColor(speed), speed);
     }
   }
 }
@@ -190,11 +203,14 @@ function drawParticles(
       particle.trail = [];
       continue;
     }
+    const speed = Math.hypot(wind.u, wind.v);
     particle.trail.push({
       longitude: particle.longitude,
       latitude: particle.latitude,
     });
-    if (particle.trail.length > TRAIL_LENGTH) particle.trail.shift();
+    const trailLength =
+      TRAIL_MIN + Math.round(speedAmount(speed) * (TRAIL_MAX - TRAIL_MIN));
+    while (particle.trail.length > trailLength) particle.trail.shift();
     const stepped = stepParticle(
       particle,
       field,
@@ -220,7 +236,7 @@ function drawParticles(
     });
     const head = projectPoint(map, particle);
     ctx.lineTo(head.x, head.y);
-    strokeColored(ctx, speedColor(Math.hypot(wind.u, wind.v)));
+    strokeColored(ctx, speedColor(speed), speed);
   }
 }
 
@@ -256,6 +272,7 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
         failed: false,
         coarse: field.coarse,
         time: field.time,
+        speedMs: typicalSpeedMs(field),
       });
       onError(null);
     };
@@ -272,7 +289,7 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
       controller?.abort();
       controller = new AbortController();
       const { signal } = controller;
-      publish({ loading: true, failed: false, coarse: false, time: null });
+      publish({ loading: true, failed: false, coarse: false, time: null, speedMs: null });
       fetchWindField(gridForBounds(snapped), { signal })
         .then((field) => {
           if (cancelled || signal.aborted) return;
@@ -282,7 +299,13 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
         .catch((err: unknown) => {
           if (cancelled || signal.aborted) return;
           fieldRef.current = null;
-          publish({ loading: false, failed: true, coarse: false, time: null });
+          publish({
+            loading: false,
+            failed: true,
+            coarse: false,
+            time: null,
+            speedMs: null,
+          });
           onError(
             err instanceof Error ? err.message : "Couldn't load wind.",
           );
