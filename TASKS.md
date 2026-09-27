@@ -162,6 +162,18 @@ self-contained, highest visual return). Each group is largely independent.
   label. Reduced motion draws static arrows. Failures surface and leave the
   radar up. (Done — `WindOverlay`.)
 
+## SKY — tonight's sky under the sun arc (FR-16)
+
+- [x] **SKY-01** Meteor calendar: next major-shower peak from a fixed list,
+  bright-moon flag, and cloud note only when the peak falls inside the
+  forecast. Test-first. (Done — `src/lib/showers.ts`.)
+- [x] **SKY-02** Planets and eclipses via Astronomy Engine (lazy-loaded):
+  naked-eye planets up in the dark, and the next eclipse visible at the
+  active location. Tests pinned to known events. (Done — `src/lib/sky.ts`.)
+- [x] **SKY-03** Three-line "Tonight's sky" note under the sun arc. A failure
+  here does not take down the forecast. (Done — `SkyFacts`, loaded apart
+  from the forecast.)
+
 ## Later (out of scope — see PRD §7)
 
 - [ ] Standalone hourly forecast table / HOURLY tab.

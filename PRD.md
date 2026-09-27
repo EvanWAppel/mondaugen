@@ -175,6 +175,15 @@ the five ideas agreed on 2026-09-26.
   next one. **At night** it also shows the **moon phase** (name and how much of
   the disc is lit), computed from the date — no extra API. The lit side follows
   the hemisphere of the active location. Pairs with the animated sky (FR-10).
+- **FR-16** **Tonight's sky.** Under the sun arc, three short facts and nothing
+  else: the **next major meteor shower** peak (and whether a bright moon or,
+  when the peak is inside the forecast, clouds will spoil it), the **naked-eye
+  planets** above the horizon in darkness (Mercury through Saturn, with
+  direction), and the **next eclipse visible from the active location** (the
+  earlier of the next partial-or-total lunar eclipse with the moon up, and the
+  next solar eclipse visible there). Computed in the browser with Astronomy
+  Engine plus a fixed shower calendar. No new weather API, no key. Not a sky
+  chart, and not comets, satellites, or minor showers.
 
 > *Idea 4 (quality proof) is non-functional — see NFR-5..NFR-8.*
 
@@ -197,7 +206,9 @@ Still out (capture in `TASKS.md` "Later", don't build now): a standalone hourly
 table / HOURLY tab, severe-weather alerts, historical data, shareable
 per-location permalinks (beyond the OG image), additional map layers (satellite,
 temperature), and any account/server-side sync of favorites. Wind streams are
-in scope (FR-15); timeline-synced wind, gusts, and other heights are not.
+in scope (FR-15). Tonight's sky (FR-16) is the meteor peak, bright planets, and
+the next eclipse here — not a sky chart, comets, or satellites. Timeline-synced
+wind, gusts, and other wind heights are not in scope.
 
 ## 8. Success Criteria
 

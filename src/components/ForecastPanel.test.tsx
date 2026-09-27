@@ -15,6 +15,10 @@ vi.mock("./ForecastCharts", () => ({
   default: () => <div data-testid="forecast-charts" />,
 }));
 
+vi.mock("./SkyFacts", () => ({
+  default: () => <p>Tonight&apos;s sky</p>,
+}));
+
 const NYC: Location = {
   id: 1,
   name: "New York",
@@ -77,6 +81,7 @@ describe("ForecastPanel", () => {
     expect(screen.getByText("Sunset")).toBeInTheDocument();
     expect(screen.getByText("6:00 AM")).toBeInTheDocument();
     expect(screen.getByText("6:00 PM")).toBeInTheDocument();
+    expect(await screen.findByText("Tonight's sky")).toBeInTheDocument();
   });
 
   it("shows the moon phase after sunset", async () => {
