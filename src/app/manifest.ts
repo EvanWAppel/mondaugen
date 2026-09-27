@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "atmosphere — weather",
-    short_name: "atmosphere",
+    name: "Mondaugen — weather",
+    short_name: "Mondaugen",
     description:
       "A calm, ad-free personal weather app: a 10-day forecast and live radar.",
     start_url: "/",

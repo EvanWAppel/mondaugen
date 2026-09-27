@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Location } from "./types";
 
-const STORAGE_KEY = "weather:active-location";
+const STORAGE_KEY = "mondaugen:active-location";
 
 const PARIS: Location = {
   id: 2988507,

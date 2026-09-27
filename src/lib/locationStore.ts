@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
+import { readStored } from "./storage";
 import type { Location } from "./types";
 
-const STORAGE_KEY = "weather:active-location";
+const STORAGE_KEY = "mondaugen:active-location";
 
 /** Shown on first visit before the user picks anything (FR-3). */
 export const DEFAULT_LOCATION: Location = {
@@ -20,7 +21,7 @@ const listeners = new Set<() => void>();
 
 function readStorage(): Location | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readStored(STORAGE_KEY);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<Location>;

@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
+import { readStored } from "./storage";
 import type { Location } from "./types";
 
-const STORAGE_KEY = "weather:favorites";
+const STORAGE_KEY = "mondaugen:favorites";
 
 /**
  * Stable identity for a favorite. Geolocation-derived locations synthesize an
@@ -22,7 +23,7 @@ const listeners = new Set<() => void>();
 
 function readStorage(): Location[] {
   if (typeof window === "undefined") return EMPTY;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readStored(STORAGE_KEY);
   if (!raw) return EMPTY;
   try {
     const parsed = JSON.parse(raw);

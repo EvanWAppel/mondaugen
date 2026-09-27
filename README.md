@@ -1,24 +1,28 @@
-# atmosphere
+# Mondaugen
 
 A calm, **ad-free personal weather app** — the two things a weather site is
 actually for, with none of the noise: a clean **10-day forecast** and an
 **interactive precipitation radar**. Dark, glass-panel UI over a **sky-reactive
 backdrop** that shifts with the current conditions and the time of day.
 
+Named for Kurt Mondaugen in Thomas Pynchon's *V.*, who listened for a signal
+in the sferics — radio noise from the atmosphere.
+
 Part of [Evan Appel's portfolio](https://evanappel.me).
 
-- **Live:** deployed on Vercel _(custom domain `weather.evanappel.me` pending DNS;
+- **Live:** deployed on Vercel _(custom domain `mondaugen.evanappel.me` pending DNS;
   served at the Vercel URL until then)._
+- **Repo:** [EvanWAppel/mondaugen](https://github.com/EvanWAppel/mondaugen)
 - **Spec:** [PRD.md](./PRD.md) · **Decisions:** [DECISIONS.md](./DECISIONS.md) ·
   **Board:** [TASKS.md](./TASKS.md)
 
 <!-- Add a hero screenshot / GIF here once captured:
-     ![atmosphere](./docs/hero.png) -->
+     ![Mondaugen](./docs/hero.png) -->
 
 ## Why
 
 Weather sites bury the forecast and the radar under ads, autoplay video, and
-shifting layout. atmosphere keeps only those two features and makes them feel
+shifting layout. Mondaugen keeps only those two features and makes them feel
 like something you'd open every morning — fast, quiet, and yours.
 
 ## Features

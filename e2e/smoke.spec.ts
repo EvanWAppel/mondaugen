@@ -3,11 +3,11 @@ import { test, expect } from "@playwright/test";
 // Deterministic, network-independent smoke tests — they exercise the shell and
 // client interactions (palette, colophon) without depending on the live weather
 // APIs (the data layer is covered by the Vitest unit suite with mocks).
-test.describe("atmosphere smoke", () => {
+test.describe("Mondaugen smoke", () => {
   test("renders the app shell", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("link", { name: /atmosphere home/i }),
+      page.getByRole("link", { name: /Mondaugen home/i }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: /jump/i })).toBeVisible();
     await expect(

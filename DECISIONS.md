@@ -2,6 +2,38 @@
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
 
+## 2026-09-27 — Identifiers follow the Mondaugen name
+
+**Decision:** The GitHub repo is `EvanWAppel/mondaugen`, the npm package is
+`mondaugen`, the Vercel project is `mondaugen`, and the domain in the PRD is
+`mondaugen.evanappel.me`. Saved browser data moves from `weather:` keys to
+`mondaugen:` keys, copying an existing value forward once.
+
+**Why:** Requested after the product rename. The entry below left these as
+`weather` so deploys and saved places would not move. That hold is lifted.
+
+**Still `weather`:** the local folder and the portfolio `orch` name
+(`[projects.weather]`, path `weather`), so `orch test weather` still finds the
+app. Forecast code is unchanged — "weather" there means the sky, not the
+product.
+
+**DNS:** `mondaugen.evanappel.me` still needs a CNAME at Wix. See BLOCKED.md.
+
+## 2026-09-27 — Product name: Mondaugen
+
+**Decision:** The product is named **Mondaugen**. The wordmark, document title,
+install name, social card, and README use that name. The repo, npm package,
+Vercel project, and domain stay `weather`.
+
+**Why:** Requested rebrand, after Kurt Mondaugen in Thomas Pynchon's *V.* —
+the engineer who listened for a signal in the sferics, radio noise from the
+atmosphere. The old public name was *atmosphere*.
+
+**Rejected:** Renaming the GitHub repo, the Vercel project, `package.json`, or
+`weather.evanappel.me`. Those identifiers are wired to the portfolio manifest,
+DNS, and deploys. Saved locations stay under the existing `weather:`
+`localStorage` keys so a rename does not wipe them.
+
 ## 2026-09-26 — Tonight's sky: meteors, planets, one eclipse
 
 **Decision:** Under the sun arc, show three facts (FR-16): the next major

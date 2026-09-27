@@ -1,6 +1,7 @@
 import type { Forecast, TemperatureUnit } from "./forecast";
+import { readStored } from "./storage";
 
-const PREFIX = "weather:last-forecast:";
+const PREFIX = "mondaugen:last-forecast:";
 
 export interface CachedForecast {
   forecast: Forecast;
@@ -42,7 +43,7 @@ export function loadForecast(
   unit: TemperatureUnit,
 ): CachedForecast | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(key(lat, lon, unit));
+  const raw = readStored(key(lat, lon, unit));
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as CachedForecast;

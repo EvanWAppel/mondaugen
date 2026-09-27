@@ -2,7 +2,7 @@
 // fallback for same-origin GETs, so the app shell loads offline without ever
 // serving stale assets while online. Cross-origin requests (weather APIs, map
 // tiles) are left to the network.
-const CACHE = "atmosphere-v1";
+const CACHE = "mondaugen-v1";
 
 self.addEventListener("install", () => self.skipWaiting());
 

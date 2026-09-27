@@ -6,7 +6,7 @@ describe("Home", () => {
   it("renders the app brand", () => {
     render(<Home />);
     expect(
-      screen.getByRole("link", { name: /atmosphere home/i }),
+      screen.getByRole("link", { name: /Mondaugen home/i }),
     ).toBeInTheDocument();
   });
 });

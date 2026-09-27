@@ -60,7 +60,7 @@ describe("favoritesStore", () => {
 
   it("persists to localStorage", () => {
     addFavorite(NYC);
-    expect(window.localStorage.getItem("weather:favorites")).toContain(
+    expect(window.localStorage.getItem("mondaugen:favorites")).toContain(
       "New York",
     );
   });

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const STORAGE_KEY = "weather:temperature-unit";
+const STORAGE_KEY = "mondaugen:temperature-unit";
 
 beforeEach(() => {
   localStorage.clear();
