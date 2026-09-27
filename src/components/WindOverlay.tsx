@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
-import { useUnit } from "@/lib/unitStore";
 import {
   boundsKey,
-  displaySpeed,
   fetchWindField,
   flowDt,
   formatWindTime,
@@ -14,7 +12,6 @@ import {
   sample,
   speedColor,
   stepParticle,
-  windUnitLabel,
   type Bounds,
   type LngLat,
   type WindField,
@@ -30,10 +27,39 @@ interface Particle extends LngLat {
   trail: LngLat[];
 }
 
+export interface WindStatus {
+  loading: boolean;
+  failed: boolean;
+  coarse: boolean;
+  time: string | null;
+}
+
 interface WindOverlayProps {
   map: MapLibreMap;
-  mode: Extract<MapLayerMode, "wind" | "both">;
   onError: (message: string | null) => void;
+  onStatus: (status: WindStatus) => void;
+}
+
+export function windCaption(
+  mode: Extract<MapLayerMode, "wind" | "both">,
+  time: string | null,
+  coarse: boolean,
+): string {
+  const parts = ["Wind now"];
+  const when = formatWindTime(time);
+  if (when) parts.push(when);
+  if (coarse) parts.push("zoom in for a finer view");
+  if (mode === "both") parts.push("scrubber moves precipitation only");
+  return parts.join(" · ");
+}
+
+function strokeColored(ctx: CanvasRenderingContext2D, color: string) {
+  ctx.strokeStyle = "rgba(7, 11, 18, 0.9)";
+  ctx.lineWidth = 3.6;
+  ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.7;
+  ctx.stroke();
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -139,8 +165,7 @@ function drawArrows(
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
       ctx.lineTo(start.x + (dx / length) * ARROW_PX, start.y + (dy / length) * ARROW_PX);
-      ctx.strokeStyle = speedColor(Math.hypot(wind.u, wind.v));
-      ctx.stroke();
+      strokeColored(ctx, speedColor(Math.hypot(wind.u, wind.v)));
     }
   }
 }
@@ -153,9 +178,7 @@ function drawParticles(
   dt: number,
 ) {
   const zoom = map.getZoom();
-  ctx.lineWidth = 1.4;
   ctx.lineCap = "round";
-  ctx.globalAlpha = 0.9;
   for (const particle of particles) {
     const wind = sample(field, particle.longitude, particle.latitude);
     if (!wind) {
@@ -197,38 +220,16 @@ function drawParticles(
     });
     const head = projectPoint(map, particle);
     ctx.lineTo(head.x, head.y);
-    ctx.strokeStyle = speedColor(Math.hypot(wind.u, wind.v));
-    ctx.stroke();
+    strokeColored(ctx, speedColor(Math.hypot(wind.u, wind.v)));
   }
-  ctx.globalAlpha = 1;
 }
 
-function caption(
-  mode: Extract<MapLayerMode, "wind" | "both">,
-  time: string | null,
-  coarse: boolean,
-): string {
-  const parts = ["Wind now"];
-  const when = formatWindTime(time);
-  if (when) parts.push(when);
-  if (coarse) parts.push("zoom in for a finer view");
-  if (mode === "both") parts.push("scrubber moves precipitation only");
-  return parts.join(" · ");
-}
-
-export default function WindOverlay({ map, mode, onError }: WindOverlayProps) {
+export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<WindField | null>(null);
   const reduced = usePrefersReducedMotion();
-  const [unit] = useUnit();
   const [fieldTick, setFieldTick] = useState(0);
   const [pageHidden, setPageHidden] = useState(false);
-  const [status, setStatus] = useState({
-    loading: true,
-    failed: false,
-    coarse: false,
-    time: null as string | null,
-  });
 
   useEffect(() => {
     const onVisibility = () => setPageHidden(document.hidden);
@@ -243,10 +244,14 @@ export default function WindOverlay({ map, mode, onError }: WindOverlayProps) {
     let cancelled = false;
     let loadedOnce = false;
 
+    const publish = (next: WindStatus) => {
+      onStatus(next);
+    };
+
     const apply = (field: WindField) => {
       fieldRef.current = field;
       setFieldTick((tick) => tick + 1);
-      setStatus({
+      publish({
         loading: false,
         failed: false,
         coarse: field.coarse,
@@ -267,7 +272,7 @@ export default function WindOverlay({ map, mode, onError }: WindOverlayProps) {
       controller?.abort();
       controller = new AbortController();
       const { signal } = controller;
-      setStatus((current) => ({ ...current, loading: true, failed: false }));
+      publish({ loading: true, failed: false, coarse: false, time: null });
       fetchWindField(gridForBounds(snapped), { signal })
         .then((field) => {
           if (cancelled || signal.aborted) return;
@@ -277,7 +282,7 @@ export default function WindOverlay({ map, mode, onError }: WindOverlayProps) {
         .catch((err: unknown) => {
           if (cancelled || signal.aborted) return;
           fieldRef.current = null;
-          setStatus({ loading: false, failed: true, coarse: false, time: null });
+          publish({ loading: false, failed: true, coarse: false, time: null });
           onError(
             err instanceof Error ? err.message : "Couldn't load wind.",
           );
@@ -309,7 +314,7 @@ export default function WindOverlay({ map, mode, onError }: WindOverlayProps) {
       map.off("load", start);
       onError(null);
     };
-  }, [map, onError]);
+  }, [map, onError, onStatus]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -358,24 +363,6 @@ export default function WindOverlay({ map, mode, onError }: WindOverlayProps) {
   return (
     <div className="wind-overlay">
       <canvas ref={canvasRef} className="wind-canvas" aria-hidden="true" />
-      <div className="wind-readout">
-        {!status.loading && !status.failed && (
-          <p className="wind-legend">
-            <span>calm</span>
-            <span className="wind-legend-bar" />
-            <span>
-              {displaySpeed(30, unit)} {windUnitLabel(unit)}
-            </span>
-          </p>
-        )}
-        {!status.failed && (
-          <p className="wind-caption">
-            {status.loading
-              ? "Loading wind…"
-              : caption(mode, status.time, status.coarse)}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

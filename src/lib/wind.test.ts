@@ -380,10 +380,10 @@ describe("display helpers", () => {
     expect(formatWindTime(null)).toBeNull();
   });
 
-  it("runs from cyan through white to amber as speed increases", () => {
-    expect(speedColor(0)).toBe("rgb(125, 211, 252)");
-    expect(speedColor(15)).toBe("rgb(255, 255, 255)");
-    expect(speedColor(30)).toBe("rgb(251, 191, 36)");
+  it("runs from deep blue through teal to orange as speed increases", () => {
+    expect(speedColor(0)).toBe("rgb(14, 116, 184)");
+    expect(speedColor(15)).toBe("rgb(20, 184, 196)");
+    expect(speedColor(30)).toBe("rgb(234, 88, 12)");
   });
 });
 

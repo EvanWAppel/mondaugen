@@ -13,9 +13,11 @@ import {
   type RadarFrame,
 } from "@/lib/radar";
 import type { Location } from "@/lib/types";
+import { useUnit } from "@/lib/unitStore";
+import { displaySpeed, windUnitLabel } from "@/lib/wind";
 import MapLayerToggle, { type MapLayerMode } from "./MapLayerToggle";
 import RadarTimeline from "./RadarTimeline";
-import WindOverlay from "./WindOverlay";
+import WindOverlay, { windCaption, type WindStatus } from "./WindOverlay";
 
 // Keyless OSM raster base map (no Mapbox token) — see PRD §5.
 const OSM_STYLE: StyleSpecification = {
@@ -71,9 +73,16 @@ export default function RadarMap({ location }: RadarMapProps) {
   const [current, setCurrent] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<MapLayerMode>("radar");
+  const [mode, setMode] = useState<MapLayerMode>("both");
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null);
   const [windError, setWindError] = useState<string | null>(null);
+  const [windStatus, setWindStatus] = useState<WindStatus>({
+    loading: true,
+    failed: false,
+    coarse: false,
+    time: null,
+  });
+  const [unit] = useUnit();
 
   // Initialize the base map once.
   useEffect(() => {
@@ -187,17 +196,44 @@ export default function RadarMap({ location }: RadarMapProps) {
     if (next === "wind") setPlaying(false);
   };
 
+  const windNote =
+    mode === "radar" || windStatus.failed
+      ? null
+      : windStatus.loading
+        ? "Loading wind…"
+        : windCaption(mode, windStatus.time, windStatus.coarse);
+
   return (
     <div className="flex flex-col gap-3">
+      <div className="map-toolbar">
+        <MapLayerToggle mode={mode} onChange={selectMode} />
+        {windNote && (
+          <div className="map-toolbar-note">
+            {!windStatus.loading && (
+              <p className="wind-legend">
+                <span>calm</span>
+                <span className="wind-legend-bar" />
+                <span>
+                  {displaySpeed(30, unit)} {windUnitLabel(unit)}
+                </span>
+              </p>
+            )}
+            <p className="wind-caption">{windNote}</p>
+          </div>
+        )}
+      </div>
       <div className="radar-stage">
         <div
           ref={containerRef}
           aria-label={mapLabel(mode)}
           className="h-full w-full"
         />
-        <MapLayerToggle mode={mode} onChange={selectMode} />
         {mapInstance && mode !== "radar" && (
-          <WindOverlay map={mapInstance} mode={mode} onError={setWindError} />
+          <WindOverlay
+            map={mapInstance}
+            onError={setWindError}
+            onStatus={setWindStatus}
+          />
         )}
       </div>
       {error ? (
