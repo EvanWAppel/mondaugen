@@ -298,12 +298,13 @@ const MERCATOR_METERS_PER_PIXEL_Z0 = 156_543.03392;
  * Model-time step for one animation frame, calibrated so a 10 m/s wind moves
  * about `pixelsPerFrame` on screen. Faster wind moves further; the clock is
  * not real time (a true 10 m/s would be a fraction of a pixel per frame).
+ * The default is deliberately slow so the field drifts instead of racing.
  */
 export function flowDt(
   zoom: number,
   latitude: number,
   frameSeconds: number,
-  pixelsPerFrame = 3.2,
+  pixelsPerFrame = 1.4,
 ): number {
   const safeZoom = Math.min(Math.max(zoom, 0), 18);
   const cos = Math.max(Math.cos((latitude * Math.PI) / 180), 0.2);
@@ -331,6 +332,22 @@ export function stepParticle(
     longitude: normalizeLon(particle.longitude + (wind.u * dtSeconds) / metersPerDegLon),
     latitude,
   };
+}
+
+/** Median wind speed in the field, in m/s. Null when every cell is missing. */
+export function typicalSpeedMs(field: WindField): number | null {
+  const speeds: number[] = [];
+  for (let row = 0; row < field.u.length; row += 1) {
+    for (let col = 0; col < field.u[row].length; col += 1) {
+      const u = field.u[row][col];
+      const v = field.v[row][col];
+      if (u == null || v == null) continue;
+      speeds.push(Math.hypot(u, v));
+    }
+  }
+  if (speeds.length === 0) return null;
+  speeds.sort((a, b) => a - b);
+  return speeds[Math.floor(speeds.length / 2)];
 }
 
 /** Whole mph (°F) or km/h (°C), matching the forecast client's wind units. */

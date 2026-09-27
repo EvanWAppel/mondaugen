@@ -12,6 +12,7 @@ import {
   speedColor,
   stepParticle,
   toVector,
+  typicalSpeedMs,
   windForecastUrl,
   windUnitLabel,
   type WindField,
@@ -359,11 +360,32 @@ describe("stepParticle", () => {
   });
 });
 
+describe("typicalSpeedMs", () => {
+  it("returns the median speed and skips empty cells", () => {
+    const field: WindField = {
+      longitudes: [0, 1],
+      latitudes: [0, 1],
+      u: [
+        [0, 10],
+        [null, 20],
+      ],
+      v: [
+        [0, 0],
+        [null, 0],
+      ],
+      time: null,
+      coarse: false,
+    };
+
+    expect(typicalSpeedMs(field)).toBe(10);
+  });
+});
+
 describe("flowDt", () => {
   it("moves a 10 m/s wind a few pixels per frame at city zoom", () => {
     const dt = flowDt(7, 0, 1 / 60);
     const metersPerPixel = 156_543.03392 / 128;
-    expect((10 * dt) / metersPerPixel).toBeCloseTo(3.2, 1);
+    expect((10 * dt) / metersPerPixel).toBeCloseTo(1.4, 1);
   });
 });
 
