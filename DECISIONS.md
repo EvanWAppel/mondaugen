@@ -2,6 +2,26 @@
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
 
+## 2026-09-26 — Tonight's sky: meteors, planets, one eclipse
+
+**Decision:** Under the sun arc, show three facts (FR-16): the next major
+meteor-shower peak, naked-eye planets up in the dark, and the next eclipse
+visible from the active location.
+
+**Why:** Requested. These are the heavenly-body facts that change what you do
+tonight or plan for, without turning the app into a planetarium.
+
+**Rejected:** a sky chart, comet alerts, satellite passes, minor showers, and
+any new weather API. Uranus and Neptune (not naked-eye). Penumbral lunar
+eclipses (hard to see). An eclipse-path map.
+
+**Data:** No key and no new host. Shower peaks are a fixed calendar in the
+repo. Planets and eclipses are computed in the browser with Astronomy Engine
+(MIT, no dependencies). Moon brightness reuses the existing phase calculation.
+Clouds, when mentioned, come from the forecast we already fetch, and only if
+the peak is inside that window. The library stays in a lazy chunk, off the
+first load (NFR-3).
+
 ## 2026-09-26 — Moon phase on the night side of the sun arc
 
 **Decision:** The sun arc labels sunrise and sunset and counts down to whichever

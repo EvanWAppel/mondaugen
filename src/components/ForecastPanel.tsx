@@ -25,6 +25,8 @@ import type { Location } from "@/lib/types";
 
 // Lazy-load the trend charts so uPlot stays out of the initial bundle and the
 // day cards are interactive first (NFR-3).
+const SkyFacts = dynamic(() => import("./SkyFacts"), { ssr: false });
+
 const ForecastCharts = dynamic(() => import("./ForecastCharts"), {
   ssr: false,
   loading: () => (
@@ -258,6 +260,23 @@ export default function ForecastPanel({
                   : ""}
               </span>
             </p>
+            {nowEpoch > 0 &&
+              forecast &&
+              today?.sunrise &&
+              today.sunset &&
+              forecast.days[1]?.sunrise && (
+              <SkyFacts
+                latitude={latitude}
+                longitude={longitude}
+                utcOffsetSeconds={forecast.utcOffsetSeconds}
+                nowMs={nowEpoch}
+                sunriseIso={today.sunrise}
+                sunsetIso={today.sunset}
+                nextSunriseIso={forecast.days[1].sunrise}
+                hourlyTime={forecast.hourly.time}
+                hourlyCloud={forecast.hourly.cloudCover}
+              />
+            )}
           </div>
         )}
       </section>

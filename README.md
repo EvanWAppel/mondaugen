@@ -25,7 +25,8 @@ like something you'd open every morning — fast, quiet, and yours.
 
 - **10-day forecast** — a current-conditions hero (temp, feels-like, humidity,
   wind, rain, sunrise/sunset with a day-progress arc), a glass day-card row, and
-  hourly trend charts.
+  hourly trend charts. Under the arc: the next meteor peak, planets up tonight,
+  and the next eclipse visible there.
 - **Interactive radar** — animated RainViewer precipitation over a MapLibre map,
   with a play/scrub timeline (past → near-term nowcast). Optional current-wind
   streams (Radar / Both / Wind) from the same Open-Meteo forecast.
