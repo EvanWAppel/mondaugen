@@ -62,7 +62,7 @@ function ColophonDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <p>
-          <strong>atmosphere</strong> is a personal weather app — a calm, ad-free
+          <strong>Mondaugen</strong> is a personal weather app — a calm, ad-free
           take on the two things a weather site is actually for: the 10-day
           forecast and the radar. The backdrop reacts to the current conditions
           and the time of day.

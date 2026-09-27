@@ -12,7 +12,7 @@ const SOURCES = [
 export default function Footer() {
   return (
     <footer className="site-footer">
-      <span className="footer-brand">atmosphere</span>
+      <span className="footer-brand">Mondaugen</span>
       <Colophon />
       <p>
         Data from{" "}

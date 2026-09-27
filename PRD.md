@@ -1,4 +1,4 @@
-# PRD — Ad-Free Weather (codename: *weather*)
+# PRD — Mondaugen (codename: *weather*)
 
 **Status:** Draft v0.3 (portfolio-enhancement wave — see DECISIONS.md 2026-09-26)
 **Author:** Evan Appel
@@ -20,7 +20,7 @@ two features that matter, rendered fast, ad-free, on any device.
 
 ## 2. Vision
 
-A calm, ad-free **personal weather app** — the kind of thing you open each
+**Mondaugen** is a calm, ad-free **personal weather app** — the kind of thing you open each
 morning — built around exactly two features and nothing else:
 
 1. A **10-day forecast** for a searched or geolocated place, led by a
@@ -45,7 +45,7 @@ Fast first paint, works on a phone.
 - Show an **interactive map** with an animated **radar/precipitation overlay**
   (past frames + near-term forecast frames) and a play/scrub timeline.
 - Be genuinely **ad-free and tracker-free**, fast, and mobile-friendly.
-- Deploy on Vercel at **weather.evanappel.me**, auto-deploying on push to main.
+- Deploy on Vercel at **mondaugen.evanappel.me**, auto-deploying on push to main.
 
 ### Non-Goals (for now)
 - Reproducing *any* other Weather Underground feature: a standalone hourly
@@ -84,7 +84,7 @@ Fast first paint, works on a phone.
 | Tech stack | **Next.js (App Router, TypeScript, Tailwind)** — matches the rest of the portfolio. |
 | Backend | **None of our own.** Client (or Next.js route handlers as thin proxies) calls public APIs directly. |
 | Secrets | **None required** — all chosen data sources are keyless. Keep it that way. |
-| Host | **Vercel**, auto-deploy on push to main. Domain `weather.evanappel.me`. |
+| Host | **Vercel**, auto-deploy on push to main. Domain `mondaugen.evanappel.me`. |
 | Units | Support **°F/°C toggle** (imperial default for a US-facing portfolio); persist choice in `localStorage`. |
 
 > These are locked for MVP so development can start without re-litigating them.
@@ -221,5 +221,5 @@ wind, gusts, and other wind heights are not in scope.
 - **Shareable:** pasting the link unfurls into a live weather card (FR-13).
 - **Tells a story:** the README case study + in-app colophon make the keyless,
   ad-free, deliberate-tradeoff design legible to a portfolio visitor.
-- Deployed and reachable (custom domain `weather.evanappel.me` deferred until
+- Deployed and reachable (custom domain `mondaugen.evanappel.me` deferred until
   DNS is set up; served at the Vercel URL until then).

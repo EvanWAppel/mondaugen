@@ -10,7 +10,7 @@ const CARD_LOCATION = {
   longitude: -74.006,
 };
 
-export const alt = "atmosphere — a calm, ad-free weather app";
+export const alt = "Mondaugen — a calm, ad-free weather app";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 // Cache the generated card; refresh at most every 30 minutes.
@@ -82,7 +82,7 @@ export default async function OpengraphImage() {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ color: "#ffb454", fontSize: 34 }}>☀</span>
             <span style={{ fontWeight: 600, letterSpacing: -0.5 }}>
-              atmosphere
+              Mondaugen
             </span>
           </div>
           <div

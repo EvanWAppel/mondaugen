@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import type { TemperatureUnit } from "./forecast";
+import { readStored } from "./storage";
 
-const STORAGE_KEY = "weather:temperature-unit";
+const STORAGE_KEY = "mondaugen:temperature-unit";
 
 /** Imperial default for a US-facing portfolio (PRD §5). */
 export const DEFAULT_UNIT: TemperatureUnit = "fahrenheit";
@@ -12,7 +13,7 @@ const listeners = new Set<() => void>();
 
 function readStorage(): TemperatureUnit | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readStored(STORAGE_KEY);
   return raw === "fahrenheit" || raw === "celsius" ? raw : null;
 }
 

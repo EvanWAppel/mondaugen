@@ -22,19 +22,19 @@ const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "atmosphere — weather",
+  title: "Mondaugen — weather",
   description:
     "A calm, ad-free personal weather app: a 10-day forecast and live radar. No trackers.",
   icons: { icon: "/icon.svg" },
   openGraph: {
-    title: "atmosphere — weather",
+    title: "Mondaugen — weather",
     description:
       "A calm, ad-free personal weather app: a 10-day forecast and live radar.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "atmosphere — weather",
+    title: "Mondaugen — weather",
     description:
       "A calm, ad-free personal weather app: a 10-day forecast and live radar.",
   },

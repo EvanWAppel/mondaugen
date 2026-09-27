@@ -62,8 +62,8 @@ export default function WeatherApp() {
       <SkyBackdrop sky={sky} />
       <main className="shell" id="top">
         <header className="topbar">
-          <a href="#top" className="brand" aria-label="atmosphere home">
-            <span className="brand-mark" aria-hidden="true">☀</span> atmosphere
+          <a href="#top" className="brand" aria-label="Mondaugen home">
+            <span className="brand-mark" aria-hidden="true">☀</span> Mondaugen
           </a>
           <div className="controls">
             <div className="search-wrap">
