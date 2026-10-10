@@ -175,10 +175,20 @@ self-contained, highest visual return). Each group is largely independent.
   here does not take down the forecast. (Done — `SkyFacts`, loaded apart
   from the forecast.)
 
+## MAP — clearer storms and clouds (FR-17)
+
+- [x] **MAP-CL-01** Muted dark-grey OSM base; radar opacity 0.85 / 0.6 (Both).
+  (Done — `RadarMap` base style.)
+- [x] **MAP-CL-02** Cap map zoom at 7 (radar max); open at zoom 6. (Done.)
+- [x] **MAP-CL-03** Clouds toggle: latest GOES-East GeoColor from NASA GIBS,
+  filtered to clouds in the browser, under the radar, "as of" caption,
+  readable failure. Credited in footer + colophon. Test-first. (Done —
+  `src/lib/clouds.ts`.)
+
 ## Later (out of scope — see PRD §7)
 
 - [ ] Standalone hourly forecast table / HOURLY tab.
 - [ ] Severe-weather alerts.
 - [ ] Historical data; shareable per-location permalinks (beyond the OG image).
-- [ ] Extra map layers (satellite, temperature).
+- [ ] Extra map layers (temperature; satellite products beyond cloud cover).
 - [ ] Any account / cross-device sync of favorites.
