@@ -8,7 +8,11 @@ const remove = vi.hoisted(() => vi.fn());
 const addProtocol = vi.hoisted(() => vi.fn());
 const removeProtocol = vi.hoisted(() => vi.fn());
 
+const mapControl = vi.hoisted(() => ({ deferStyleLoad: false }));
+
 interface MockMap {
+  emit: (event: string, payload?: unknown) => void;
+  cloudSetTiles: ReturnType<typeof vi.fn>;
   options: {
     center: [number, number];
     zoom: number;
@@ -28,13 +32,26 @@ vi.mock("maplibre-gl", () => {
       mapInstances.push(this as unknown as MockMap);
     }
     addControl = vi.fn();
-    on = vi.fn();
+    handlers: Record<string, ((payload?: unknown) => void)[]> = {};
+    on = vi.fn((event: string, cb: (payload?: unknown) => void) => {
+      (this.handlers[event] ??= []).push(cb);
+      // The style JSON parses asynchronously; tests can hold it back.
+      if (event === "style.load" && !mapControl.deferStyleLoad) {
+        queueMicrotask(() => cb());
+      }
+    });
+    emit = (event: string, payload?: unknown) => {
+      for (const cb of this.handlers[event] ?? []) cb(payload);
+    };
+    cloudSetTiles = vi.fn();
     once = vi.fn();
     easeTo = vi.fn();
     remove = remove;
-    isStyleLoaded = () => true;
+    // False while any tile is loading in MapLibre 6; the map must not rely on it.
+    isStyleLoaded = () => false;
     sources = new Set<string>();
-    getSource = (id: string) => (this.sources.has(id) ? {} : undefined);
+    getSource = (id: string) =>
+      this.sources.has(id) ? { setTiles: this.cloudSetTiles } : undefined;
     addSource = vi.fn((id: string) => {
       this.sources.add(id);
     });
@@ -116,6 +133,8 @@ async function flushMap() {
 }
 
 afterEach(() => {
+  mapControl.deferStyleLoad = false;
+  vi.useRealTimers();
   mapInstances.length = 0;
   vi.clearAllMocks();
 });
@@ -167,7 +186,7 @@ describe("RadarMap", () => {
   it("keeps clouds off by default", async () => {
     fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
     render(<RadarMap location={NYC} />);
-    await screen.findByRole("button", { name: "Play radar" });
+    await flushMap();
     expect(screen.getByRole("button", { name: "Clouds" })).toHaveAttribute(
       "aria-pressed",
       "false",
@@ -223,7 +242,7 @@ describe("RadarMap", () => {
   it("surfaces a readable error when the satellite request fails", async () => {
     fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
     fetchLatestCloudTime.mockRejectedValue(
-      new Error("Satellite cloud request failed (503 Service Unavailable)."),
+      new Error("image time request failed (503)."),
     );
     render(<RadarMap location={NYC} />);
     await screen.findByRole("button", { name: "Play radar" });
@@ -231,9 +250,95 @@ describe("RadarMap", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Satellite cloud request failed (503 Service Unavailable).",
+      "Satellite clouds unavailable — image time request failed (503).",
     );
     expect(screen.getByRole("button", { name: "Play radar" })).toBeInTheDocument();
+  });
+
+  it("waits for the style, not for tiles, before touching layers", async () => {
+    mapControl.deferStyleLoad = true;
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    const map = mapInstances[0];
+    expect(map.addLayer).not.toHaveBeenCalled();
+
+    act(() => map.emit("style.load"));
+
+    await waitFor(() => expect(map.addLayer).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.6]));
+  });
+
+  it("applies a quick Clouds off even while tiles are still loading", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    const map = mapInstances[0];
+    await waitFor(() =>
+      expect(map.addSource).toHaveBeenCalledWith("clouds", expect.anything()),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+
+    expect(map.setLayoutProperty).toHaveBeenLastCalledWith("clouds", "visibility", "none");
+  });
+
+  it("surfaces cloud tile failures from the map", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+    const map = mapInstances[0];
+
+    act(() =>
+      map.emit("error", {
+        sourceId: "clouds",
+        error: new Error("tile request failed (502)."),
+      }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Satellite clouds unavailable — tile request failed (502).",
+    );
+  });
+
+  it("ignores aborted cloud tiles and errors from other sources", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+    const map = mapInstances[0];
+    const aborted = new Error("aborted");
+    aborted.name = "AbortError";
+
+    act(() => {
+      map.emit("error", { sourceId: "clouds", error: aborted });
+      map.emit("error", { sourceId: "radar-0", error: new Error("boom") });
+    });
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("refreshes to the newest satellite image every 10 minutes while on", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+
+    fetchLatestCloudTime.mockResolvedValue("2026-10-10T20:20:00Z");
+    await act(async () => {
+      vi.advanceTimersByTime(10 * 60 * 1000);
+    });
+
+    expect(await screen.findByText(/Clouds 20:20 UTC/)).toBeInTheDocument();
+    expect(mapInstances[0].cloudSetTiles).toHaveBeenCalledWith([
+      expect.stringContaining("/2026-10-10T20:20:00Z/"),
+    ]);
   });
 
   it("adds a radar raster layer per frame once frames load", async () => {

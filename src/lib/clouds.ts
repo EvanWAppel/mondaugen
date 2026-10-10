@@ -16,6 +16,13 @@ export const CLOUD_MAX_ZOOM = 7;
 /** MapLibre custom protocol that routes tiles through `loadCloudTile`. */
 export const CLOUD_PROTOCOL = "clouds";
 
+/** Refresh cadence for the latest image while Clouds is on (GOES scans every 10 min). */
+export const CLOUD_REFRESH_MS = 10 * 60 * 1000;
+
+function httpStatus(res: Response): string {
+  return res.statusText ? `${res.status} ${res.statusText}` : `${res.status}`;
+}
+
 function layerPath(time: string): string {
   return `${GIBS_HOST}/wmts/epsg3857/best/${CLOUD_LAYER}/default/${time}/${TILE_MATRIX_SET}`;
 }
@@ -28,7 +35,8 @@ export function cloudTileUrl(time: string): string {
 /**
  * Resolve the latest GeoColor image time. GIBS answers `default` with the
  * newest image and names it in `layer-time-actual`; pinning that time keeps
- * every tile in a session from the same scan. Errors surface (FR-6).
+ * every tile from the same scan. Errors surface (FR-6); messages are short
+ * because the UI prefixes them with "Satellite clouds unavailable —".
  */
 export async function fetchLatestCloudTime({
   signal,
@@ -38,13 +46,11 @@ export async function fetchLatestCloudTime({
     signal,
   });
   if (!res.ok) {
-    throw new Error(
-      `Satellite cloud request failed (${res.status} ${res.statusText}).`,
-    );
+    throw new Error(`image time request failed (${httpStatus(res)}).`);
   }
   const time = res.headers.get("layer-time-actual");
   if (!time) {
-    throw new Error("Satellite cloud response was missing its image time.");
+    throw new Error("response was missing its image time.");
   }
   return time;
 }
@@ -82,14 +88,12 @@ export async function loadCloudTile(
   const url = params.url.replace(`${CLOUD_PROTOCOL}://`, "https://");
   const res = await fetch(url, { signal: abortController.signal });
   if (!res.ok) {
-    throw new Error(
-      `Satellite cloud tile failed (${res.status} ${res.statusText}).`,
-    );
+    throw new Error(`tile request failed (${httpStatus(res)}).`);
   }
   const source = await createImageBitmap(await res.blob());
   const canvas = new OffscreenCanvas(source.width, source.height);
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Satellite cloud tile: 2D canvas unavailable.");
+  if (!ctx) throw new Error("2D canvas unavailable in this browser.");
   ctx.drawImage(source, 0, 0);
   source.close();
   const image = ctx.getImageData(0, 0, canvas.width, canvas.height);

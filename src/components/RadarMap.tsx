@@ -5,6 +5,7 @@ import {
   Map as MapLibreMap,
   NavigationControl,
   addProtocol,
+  type RasterTileSource,
   removeProtocol,
   type StyleSpecification,
 } from "maplibre-gl";
@@ -12,6 +13,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {
   CLOUD_MAX_ZOOM,
   CLOUD_PROTOCOL,
+  CLOUD_REFRESH_MS,
   cloudTileUrl,
   fetchLatestCloudTime,
   loadCloudTile,
@@ -79,6 +81,14 @@ function mapLabel(mode: MapLayerMode): string {
 const RADAR_MAX_ZOOM = 7;
 const INITIAL_ZOOM = 6;
 
+function cloudErrorMessage(err: unknown): string {
+  const detail =
+    err && typeof err === "object" && "message" in err
+      ? String(err.message)
+      : String(err);
+  return `Satellite clouds unavailable — ${detail}`;
+}
+
 function cloudCaption(time: string): string {
   return `Clouds ${time.slice(11, 16)} UTC · GOES-East satellite (Americas)`;
 }
@@ -100,15 +110,22 @@ export default function RadarMap({ location }: RadarMapProps) {
   ]);
 
   const [frames, setFrames] = useState<RadarFrame[]>([]);
+  const [radarHost, setRadarHost] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<MapLayerMode>("both");
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null);
+  // True once the style JSON is parsed — all addSource/addLayer/set*Property
+  // calls need. Not `isStyleLoaded()`: in MapLibre 6 that is false whenever
+  // any tile is loading, and the "load" event it pairs with fires only once.
+  const [styleReady, setStyleReady] = useState(false);
   const [windError, setWindError] = useState<string | null>(null);
   const [cloudsOn, setCloudsOn] = useState(false);
   const [cloudTime, setCloudTime] = useState<string | null>(null);
   const [cloudError, setCloudError] = useState<string | null>(null);
+  const cloudFetchedAt = useRef(0);
+  const cloudSourceTime = useRef<string | null>(null);
   const [windStatus, setWindStatus] = useState<WindStatus>({
     loading: true,
     failed: false,
@@ -132,8 +149,17 @@ export default function RadarMap({ location }: RadarMapProps) {
     });
     addProtocol(CLOUD_PROTOCOL, loadCloudTile);
     map.addControl(new NavigationControl(), "top-right");
-    // Surface MapLibre errors instead of failing silently (FR-6).
-    map.on("error", (e) => console.error("[radar-map] maplibre error", e));
+    map.on("style.load", () => setStyleReady(true));
+    // Surface MapLibre errors instead of failing silently (FR-6). Cloud tile
+    // failures (fetch, decode, canvas) also reach the UI.
+    map.on("error", (e) => {
+      console.error("[radar-map] maplibre error", e);
+      const sourceId = (e as { sourceId?: string }).sourceId;
+      const err = e.error as { name?: string; message: string } | undefined;
+      if (sourceId === CLOUD_LAYER_ID && err && err.name !== "AbortError") {
+        setCloudError(cloudErrorMessage(err));
+      }
+    });
     mapRef.current = map;
     setMapInstance(map);
 
@@ -151,43 +177,17 @@ export default function RadarMap({ location }: RadarMapProps) {
     });
   }, [location.latitude, location.longitude]);
 
-  // Fetch the radar frame index once, then add a transparent raster layer per
-  // frame; playback toggles opacity (the standard RainViewer pattern).
+  // Fetch the radar frame index once.
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
         const result = await fetchRadarFrames({ signal: controller.signal });
+        setRadarHost(result.host);
         setFrames(result.frames);
         // Start on the most recent past frame.
         const lastPast = result.frames.filter((f) => f.kind === "past").length;
         setCurrent(Math.max(0, lastPast - 1));
-
-        const map = mapRef.current;
-        if (!map) return;
-        const addLayers = () => {
-          result.frames.forEach((frame, i) => {
-            const id = layerId(i);
-            if (map.getSource(id)) return;
-            map.addSource(id, {
-              type: "raster",
-              tiles: [radarTileUrl(result.host, frame)],
-              tileSize: 256,
-              maxzoom: RADAR_MAX_ZOOM,
-            });
-            map.addLayer({
-              id,
-              type: "raster",
-              source: id,
-              paint: {
-                "raster-opacity": 0,
-                "raster-opacity-transition": { duration: 0 },
-              },
-            });
-          });
-        };
-        if (map.isStyleLoaded()) addLayers();
-        else map.once("load", addLayers);
       } catch (err) {
         if (controller.signal.aborted) return;
         setError(
@@ -198,75 +198,107 @@ export default function RadarMap({ location }: RadarMapProps) {
     return () => controller.abort();
   }, []);
 
+  // Add a transparent raster layer per frame; playback toggles opacity (the
+  // standard RainViewer pattern).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady || !radarHost) return;
+    frames.forEach((frame, i) => {
+      const id = layerId(i);
+      if (map.getSource(id)) return;
+      map.addSource(id, {
+        type: "raster",
+        tiles: [radarTileUrl(radarHost, frame)],
+        tileSize: 256,
+        maxzoom: RADAR_MAX_ZOOM,
+      });
+      map.addLayer({
+        id,
+        type: "raster",
+        source: id,
+        paint: {
+          "raster-opacity": 0,
+          "raster-opacity-transition": { duration: 0 },
+        },
+      });
+    });
+  }, [styleReady, radarHost, frames]);
+
   // Show only the current frame's layer.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || frames.length === 0) return;
-    const apply = () => {
-      frames.forEach((_, i) => {
-        if (map.getLayer(layerId(i))) {
-          map.setPaintProperty(
-            layerId(i),
-            "raster-opacity",
-            i === current ? radarOpacity(mode) : 0,
-          );
-        }
-      });
-    };
-    if (map.isStyleLoaded()) apply();
-    else map.once("load", apply);
-  }, [current, frames, mode]);
-
-  // Resolve the latest satellite image the first time clouds are switched on.
-  useEffect(() => {
-    if (!cloudsOn || cloudTime) return;
-    const controller = new AbortController();
-    fetchLatestCloudTime({ signal: controller.signal })
-      .then(setCloudTime)
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setCloudsOn(false);
-        setCloudError(
-          err instanceof Error ? err.message : "Couldn't load satellite clouds.",
+    if (!map || !styleReady || frames.length === 0) return;
+    frames.forEach((_, i) => {
+      if (map.getLayer(layerId(i))) {
+        map.setPaintProperty(
+          layerId(i),
+          "raster-opacity",
+          i === current ? radarOpacity(mode) : 0,
         );
-      });
-    return () => controller.abort();
-  }, [cloudsOn, cloudTime]);
+      }
+    });
+  }, [styleReady, current, frames, mode]);
 
-  // Add the cloud layer beneath the radar, or show/hide it.
+  // While clouds are on, resolve the latest satellite image now (unless the
+  // last lookup is still fresh) and again every refresh interval.
+  useEffect(() => {
+    if (!cloudsOn) return;
+    const controller = new AbortController();
+    const load = () => {
+      cloudFetchedAt.current = Date.now();
+      fetchLatestCloudTime({ signal: controller.signal })
+        .then(setCloudTime)
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) return;
+          setCloudsOn(false);
+          setCloudError(cloudErrorMessage(err));
+        });
+    };
+    if (Date.now() - cloudFetchedAt.current >= CLOUD_REFRESH_MS) load();
+    const timer = setInterval(load, CLOUD_REFRESH_MS);
+    return () => {
+      clearInterval(timer);
+      controller.abort();
+    };
+  }, [cloudsOn]);
+
+  // Add the cloud layer beneath the radar, point it at a newer image, or
+  // show/hide it.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !cloudTime) return;
-    const apply = () => {
-      if (!map.getSource(CLOUD_LAYER_ID)) {
-        if (!cloudsOn) return;
-        map.addSource(CLOUD_LAYER_ID, {
+    if (!map || !styleReady || !cloudTime) return;
+    const source = map.getSource(CLOUD_LAYER_ID) as RasterTileSource | undefined;
+    if (!source) {
+      if (!cloudsOn) return;
+      map.addSource(CLOUD_LAYER_ID, {
+        type: "raster",
+        tiles: [cloudTileUrl(cloudTime)],
+        tileSize: 256,
+        maxzoom: CLOUD_MAX_ZOOM,
+        attribution: "Clouds: NASA GIBS / NOAA GOES-East",
+      });
+      map.addLayer(
+        {
+          id: CLOUD_LAYER_ID,
           type: "raster",
-          tiles: [cloudTileUrl(cloudTime)],
-          tileSize: 256,
-          maxzoom: CLOUD_MAX_ZOOM,
-          attribution: "Clouds: NASA GIBS / NOAA GOES-East",
-        });
-        map.addLayer(
-          {
-            id: CLOUD_LAYER_ID,
-            type: "raster",
-            source: CLOUD_LAYER_ID,
-            paint: { "raster-opacity": CLOUD_OPACITY },
-          },
-          map.getLayer(layerId(0)) ? layerId(0) : undefined,
-        );
-        return;
-      }
-      map.setLayoutProperty(
-        CLOUD_LAYER_ID,
-        "visibility",
-        cloudsOn ? "visible" : "none",
+          source: CLOUD_LAYER_ID,
+          paint: { "raster-opacity": CLOUD_OPACITY },
+        },
+        map.getLayer(layerId(0)) ? layerId(0) : undefined,
       );
-    };
-    if (map.isStyleLoaded()) apply();
-    else map.once("load", apply);
-  }, [cloudsOn, cloudTime]);
+      cloudSourceTime.current = cloudTime;
+      return;
+    }
+    if (cloudSourceTime.current !== cloudTime) {
+      source.setTiles([cloudTileUrl(cloudTime)]);
+      cloudSourceTime.current = cloudTime;
+    }
+    map.setLayoutProperty(
+      CLOUD_LAYER_ID,
+      "visibility",
+      cloudsOn ? "visible" : "none",
+    );
+  }, [styleReady, cloudsOn, cloudTime]);
 
   // Advance frames while playing. Wind-only has no timeline, so don't keep
   // stepping precipitation behind it.
@@ -336,7 +368,7 @@ export default function RadarMap({ location }: RadarMapProps) {
           aria-label={mapLabel(mode)}
           className="h-full w-full"
         />
-        {mapInstance && mode !== "radar" && (
+        {mapInstance && styleReady && mode !== "radar" && (
           <WindOverlay
             map={mapInstance}
             onError={setWindError}

@@ -95,14 +95,24 @@ describe("fetchLatestCloudTime", () => {
         ),
     );
     await expect(fetchLatestCloudTime()).rejects.toThrow(
-      "Satellite cloud request failed (503 Service Unavailable).",
+      "image time request failed (503 Service Unavailable).",
+    );
+  });
+
+  it("omits the empty HTTP/2 status text", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(headerResponse({}, { ok: false, status: 503, statusText: "" })),
+    );
+    await expect(fetchLatestCloudTime()).rejects.toThrow(
+      "image time request failed (503).",
     );
   });
 
   it("throws when the time header is missing", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(headerResponse({})));
     await expect(fetchLatestCloudTime()).rejects.toThrow(
-      "Satellite cloud response was missing its image time.",
+      "response was missing its image time.",
     );
   });
 });
@@ -154,6 +164,6 @@ describe("loadCloudTile", () => {
     );
     await expect(
       loadCloudTile({ url: `${CLOUD_PROTOCOL}://gibs.example/1/0/0.png` }, new AbortController()),
-    ).rejects.toThrow("Satellite cloud tile failed (404 Not Found).");
+    ).rejects.toThrow("tile request failed (404 Not Found).");
   });
 });

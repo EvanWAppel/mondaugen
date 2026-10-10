@@ -46,6 +46,17 @@ transparent and the caption says "(Americas)". Snow cover and very bright
 ground can pass the cloud filter as faint cloud. Night-time GeoColor (IR
 clouds over city lights) hasn't been checked by eye yet.
 
+**Review follow-ups (same day):**
+- Map edits now wait for the style JSON (`style.load`), not `isStyleLoaded()`.
+  In MapLibre 6 that is false while any tile loads, and its `load` fallback
+  fires once, so toggles, radar frame changes and post-pan wind refreshes
+  could be silently dropped. This bug predated the change for radar and wind.
+- Cloud tile failures (fetch, decode, canvas) now show as a readable error.
+  Messages read "Satellite clouds unavailable — …" and drop HTTP/2's empty
+  status text.
+- While Clouds is on, the latest image time is re-checked every 10 minutes and
+  the tiles swap to the newer scan.
+
 ## 2026-09-27 — Identifiers follow the Mondaugen name
 
 **Decision:** The GitHub repo is `EvanWAppel/mondaugen`, the npm package is
