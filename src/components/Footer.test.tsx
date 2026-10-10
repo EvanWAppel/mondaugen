@@ -8,9 +8,9 @@ describe("Footer", () => {
     expect(screen.getByText("Mondaugen")).toBeInTheDocument();
   });
 
-  it("attributes all three data sources with links", () => {
+  it("attributes every data source with links", () => {
     render(<Footer />);
-    for (const name of ["Open-Meteo", "RainViewer", "OpenStreetMap"]) {
+    for (const name of ["Open-Meteo", "RainViewer", "NASA GIBS", "OpenStreetMap"]) {
       const link = screen.getByRole("link", { name });
       expect(link).toHaveAttribute("href");
     }

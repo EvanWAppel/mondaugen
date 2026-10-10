@@ -2,6 +2,61 @@
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
 
+## 2026-10-10 — Clearer radar map: muted base, zoom cap, satellite clouds
+
+**Decision:** Three changes to the radar map (FR-17):
+
+1. **Muted base map.** The OSM tiles are drawn greyscale with the brightness
+   range inverted (a dark-grey map with light labels; major roads show mid-grey,
+   minor roads fade out), and the radar
+   is more opaque: 0.85 in Radar mode, 0.6 in Both (was 0.7 / 0.35).
+2. **Zoom capped at 7**, the highest zoom RainViewer serves, so radar is never
+   stretched into a blur. The map now opens at zoom 6 so there is room to zoom
+   in.
+3. **Satellite cloud cover**: an independent **Clouds** toggle (off by
+   default) adds the latest NASA GIBS **GOES-East GeoColor** image under the
+   radar. GeoColor tiles are opaque true-colour images, so each tile is
+   processed in the browser (bright, low-saturation pixels stay; land, ocean,
+   desert and city lights go transparent) to leave clouds only.
+
+**Why:** Requested: storms and cloud cover were hard to see. The faint radar
+(35% in the default Both mode) over OSM's busy colours was the main cause.
+RainViewer can't help here: its free tier now serves a single colour scheme
+(schemes 2/4/6/8 return the same tile) and its satellite feed is empty.
+
+**Locked decisions changed:** PRD §3/§5/§7 listed satellite layers as out.
+**Satellite cloud cover is now in.** Temperature layers stay out. **New
+provider:** NASA GIBS (`gibs.earthdata.nasa.gov`), keyless, CORS-open, credited
+in the footer and colophon.
+
+**Rejected:**
+- *Open-Meteo `cloud_cover` grid* (same provider, sampled like wind). Coarse
+  model output rather than an observed image.
+- *GeoColor drawn as-is* at ~80% opacity. Looks like a satellite photo but
+  hides the street map and its labels while Clouds is on.
+- *Clouds synced to the radar timeline.* About 13× the tile requests, and
+  there are no satellite frames for the nowcast. Clouds show the latest image
+  with an "as of" time, like wind.
+- *Dimmed (not inverted) base map.* Black labels on mid-grey were hard to read.
+- *Crisp nearest-neighbour radar past zoom 7.* Keeps street-level zoom but
+  looks blocky.
+
+**Limits:** GOES-East covers the Americas only; elsewhere the cloud tiles are
+transparent and the caption says "(Americas)". Snow cover and very bright
+ground can pass the cloud filter as faint cloud. Night-time GeoColor (IR
+clouds over city lights) hasn't been checked by eye yet.
+
+**Review follow-ups (same day):**
+- Map edits now wait for the style JSON (`style.load`), not `isStyleLoaded()`.
+  In MapLibre 6 that is false while any tile loads, and its `load` fallback
+  fires once, so toggles, radar frame changes and post-pan wind refreshes
+  could be silently dropped. This bug predated the change for radar and wind.
+- Cloud tile failures (fetch, decode, canvas) now show as a readable error.
+  Messages read "Satellite clouds unavailable — …" and drop HTTP/2's empty
+  status text.
+- While Clouds is on, the latest image time is re-checked every 10 minutes and
+  the tiles swap to the newer scan.
+
 ## 2026-09-27 — Identifiers follow the Mondaugen name
 
 **Decision:** The GitHub repo is `EvanWAppel/mondaugen`, the npm package is

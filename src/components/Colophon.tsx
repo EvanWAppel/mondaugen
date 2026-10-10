@@ -15,6 +15,11 @@ const SOURCES = [
     role: "radar tiles",
   },
   {
+    label: "NASA GIBS (NOAA GOES-East)",
+    href: "https://www.earthdata.nasa.gov/gibs",
+    role: "satellite clouds",
+  },
+  {
     label: "MapLibre GL + OpenStreetMap",
     href: "https://maplibre.org/",
     role: "base map",

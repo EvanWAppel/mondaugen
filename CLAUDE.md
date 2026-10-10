@@ -25,7 +25,8 @@ almost certainly "no, that's out of scope."
   (wind streams sample `wind_speed_10m` / `wind_direction_10m` over the visible map)
 - **Geocoding:** Open-Meteo — `https://geocoding-api.open-meteo.com/v1/search`
 - **Radar tiles + frame index:** RainViewer — `https://api.rainviewer.com/`
-- **Base map:** MapLibre GL + OpenStreetMap raster tiles.
+- **Satellite clouds:** NASA GIBS — GOES-East GeoColor WMTS, `https://gibs.earthdata.nasa.gov/` (filtered to clouds in the browser)
+- **Base map:** MapLibre GL + OpenStreetMap raster tiles, drawn muted dark grey.
 
 No API keys or secrets should be required. If you think you need one, stop and
 ask — it likely means the wrong provider is being reached for.

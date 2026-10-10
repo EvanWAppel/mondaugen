@@ -54,7 +54,8 @@ Fast first paint, works on a phone.
   layer soup, etc. (Note: hourly data shown as **trend charts within the 10-day
   forecast** is in scope — see FR-4 and DECISIONS.md 2026-08-22. **Current-wind
   streams on the radar map** are in scope — see FR-15 and DECISIONS.md
-  2026-09-26. Satellite and temperature layers are still not.)
+  2026-09-26. **Satellite cloud cover** is in scope — see FR-17 and
+  DECISIONS.md 2026-10-10. Temperature layers are still not.)
 - **User accounts, server-side sync, or notifications.** (Client-side favorite
   locations in `localStorage` are now in scope — see FR-11 — but there is still
   no account and nothing syncs across devices.)
@@ -75,11 +76,12 @@ Fast first paint, works on a phone.
 
 | Dimension | Decision |
 |---|---|
-| Scope | **Two core features**: 10-day forecast + interactive radar map, plus **current-wind streams** on that map (FR-15). The v0.3 enhancements (§6.5) are polish, presentation, and *conveniences around those two* (animated backdrop, local favorites, ⌘K, sunrise/sunset, social image). Hourly tables, alerts, and other map layers (satellite, temperature) stay out. |
+| Scope | **Two core features**: 10-day forecast + interactive radar map, plus **current-wind streams** and **satellite cloud cover** on that map (FR-15, FR-17). The v0.3 enhancements (§6.5) are polish, presentation, and *conveniences around those two* (animated backdrop, local favorites, ⌘K, sunrise/sunset, social image). Hourly tables, alerts, and other map layers (temperature) stay out. |
 | Forecast data | **Open-Meteo** (`api.open-meteo.com`) — free, no API key, global, up to 16-day daily. We display 10. |
 | Geocoding | **Open-Meteo Geocoding API** (`geocoding-api.open-meteo.com`) for name → lat/lon search. |
 | Radar tiles | **RainViewer** public tile API — free, no key; past + nowcast frames with timestamps. |
-| Base map | **MapLibre GL** (open source) with free OSM raster tiles. No Mapbox token. |
+| Satellite clouds | **NASA GIBS** WMTS — GOES-East ABI GeoColor, free, no key, 10-minute refresh (Americas). Filtered client-side to clouds only. |
+| Base map | **MapLibre GL** (open source) with free OSM raster tiles, drawn muted dark grey. No Mapbox token. |
 | Location input | **Search box + browser geolocation.** No saved-locations backend in MVP. |
 | Tech stack | **Next.js (App Router, TypeScript, Tailwind)** — matches the rest of the portfolio. |
 | Backend | **None of our own.** Client (or Next.js route handlers as thin proxies) calls public APIs directly. |
@@ -128,6 +130,13 @@ Fast first paint, works on a phone.
   dims the radar and notes that the scrubber moves precipitation only. Motion
   stops under `prefers-reduced-motion` and draws static arrows instead. A wind
   fetch failure is a readable error and does not take down the radar.
+- **FR-17** The map is drawn for legibility: the OSM base is muted dark grey,
+  the radar is opaque enough to read in every mode, and zoom stops at 7 (the
+  radar's highest zoom) so tiles are never stretched. A separate **Clouds**
+  toggle (off by default) adds the latest GOES-East GeoColor satellite image
+  from NASA GIBS under the radar, filtered to clouds only, with an "as of"
+  time. Clouds don't follow the timeline. A satellite failure is a readable
+  error and leaves the radar up.
 
 ### 6.4 Non-functional
 - **NFR-1** Ad-free and tracker-free. No third-party ad/analytics scripts.
@@ -204,11 +213,12 @@ the five ideas agreed on 2026-09-26.
 
 Still out (capture in `TASKS.md` "Later", don't build now): a standalone hourly
 table / HOURLY tab, severe-weather alerts, historical data, shareable
-per-location permalinks (beyond the OG image), additional map layers (satellite,
-temperature), and any account/server-side sync of favorites. Wind streams are
+per-location permalinks (beyond the OG image), additional map layers
+(temperature), and any account/server-side sync of favorites. Wind streams are
 in scope (FR-15). Tonight's sky (FR-16) is the meteor peak, bright planets, and
 the next eclipse here — not a sky chart, comets, or satellites. Timeline-synced
-wind, gusts, and other wind heights are not in scope.
+wind, gusts, and other wind heights are not in scope. Satellite clouds are in
+scope (FR-17); timeline-synced clouds and other satellite products are not.
 
 ## 8. Success Criteria
 

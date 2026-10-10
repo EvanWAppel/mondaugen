@@ -3,6 +3,7 @@ import Colophon from "./Colophon";
 const SOURCES = [
   { label: "Open-Meteo", href: "https://open-meteo.com/" },
   { label: "RainViewer", href: "https://www.rainviewer.com/" },
+  { label: "NASA GIBS", href: "https://www.earthdata.nasa.gov/gibs" },
   {
     label: "OpenStreetMap",
     href: "https://www.openstreetmap.org/copyright",

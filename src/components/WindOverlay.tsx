@@ -258,7 +258,6 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
     let timer: ReturnType<typeof setTimeout> | null = null;
     let controller: AbortController | null = null;
     let cancelled = false;
-    let loadedOnce = false;
 
     const publish = (next: WindStatus) => {
       onStatus(next);
@@ -277,8 +276,9 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
       onError(null);
     };
 
+    // Mounted only once the style is ready (RadarMap). Don't gate on
+    // `isStyleLoaded()`: it is false while any tile loads, i.e. after every pan.
     const load = () => {
-      if (!map.isStyleLoaded()) return;
       const snapped = quantizeBounds(readBounds(map));
       const key = boundsKey(snapped);
       const cached = cache.get(key);
@@ -317,16 +317,7 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
       timer = setTimeout(load, MOVE_DEBOUNCE_MS);
     };
 
-    const start = () => {
-      if (loadedOnce) schedule();
-      else {
-        loadedOnce = true;
-        load();
-      }
-    };
-
-    if (map.isStyleLoaded()) start();
-    else map.once("load", start);
+    load();
     map.on("moveend", schedule);
 
     return () => {
@@ -334,7 +325,6 @@ export default function WindOverlay({ map, onError, onStatus }: WindOverlayProps
       controller?.abort();
       if (timer) clearTimeout(timer);
       map.off("moveend", schedule);
-      map.off("load", start);
       onError(null);
     };
   }, [map, onError, onStatus]);

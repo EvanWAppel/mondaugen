@@ -5,9 +5,23 @@ import type { Location } from "@/lib/types";
 
 const mapInstances = vi.hoisted(() => [] as MockMap[]);
 const remove = vi.hoisted(() => vi.fn());
+const addProtocol = vi.hoisted(() => vi.fn());
+const removeProtocol = vi.hoisted(() => vi.fn());
+
+const mapControl = vi.hoisted(() => ({ deferStyleLoad: false }));
 
 interface MockMap {
-  options: { center: [number, number] };
+  emit: (event: string, payload?: unknown) => void;
+  cloudSetTiles: ReturnType<typeof vi.fn>;
+  options: {
+    center: [number, number];
+    zoom: number;
+    maxZoom: number;
+    style: { layers: { id: string; paint?: Record<string, number> }[] };
+  };
+  addSource: ReturnType<typeof vi.fn>;
+  addLayer: ReturnType<typeof vi.fn>;
+  setLayoutProperty: ReturnType<typeof vi.fn>;
 }
 
 vi.mock("maplibre-gl", () => {
@@ -18,16 +32,33 @@ vi.mock("maplibre-gl", () => {
       mapInstances.push(this as unknown as MockMap);
     }
     addControl = vi.fn();
-    on = vi.fn();
+    handlers: Record<string, ((payload?: unknown) => void)[]> = {};
+    on = vi.fn((event: string, cb: (payload?: unknown) => void) => {
+      (this.handlers[event] ??= []).push(cb);
+      // The style JSON parses asynchronously; tests can hold it back.
+      if (event === "style.load" && !mapControl.deferStyleLoad) {
+        queueMicrotask(() => cb());
+      }
+    });
+    emit = (event: string, payload?: unknown) => {
+      for (const cb of this.handlers[event] ?? []) cb(payload);
+    };
+    cloudSetTiles = vi.fn();
     once = vi.fn();
     easeTo = vi.fn();
     remove = remove;
-    isStyleLoaded = () => true;
-    getSource = () => undefined;
-    addSource = vi.fn();
+    // False while any tile is loading in MapLibre 6; the map must not rely on it.
+    isStyleLoaded = () => false;
+    sources = new Set<string>();
+    getSource = (id: string) =>
+      this.sources.has(id) ? { setTiles: this.cloudSetTiles } : undefined;
+    addSource = vi.fn((id: string) => {
+      this.sources.add(id);
+    });
     addLayer = vi.fn();
     getLayer = () => ({});
     setPaintProperty = vi.fn();
+    setLayoutProperty = vi.fn();
     off = vi.fn();
     getZoom = () => 7;
     project = () => ({ x: 0, y: 0 });
@@ -39,7 +70,7 @@ vi.mock("maplibre-gl", () => {
     });
   }
   class NavigationControl {}
-  return { Map, NavigationControl };
+  return { Map, NavigationControl, addProtocol, removeProtocol };
 });
 
 const fetchRadarFrames = vi.hoisted(() => vi.fn());
@@ -47,6 +78,11 @@ const fetchWindField = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/wind", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/wind")>();
   return { ...actual, fetchWindField };
+});
+const fetchLatestCloudTime = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/clouds", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/clouds")>();
+  return { ...actual, fetchLatestCloudTime };
 });
 vi.mock("@/lib/radar", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/radar")>();
@@ -86,6 +122,7 @@ const TWO_FRAMES = {
 
 beforeEach(() => {
   fetchWindField.mockResolvedValue(WIND_FIELD);
+  fetchLatestCloudTime.mockResolvedValue("2026-10-10T20:10:00Z");
   HTMLCanvasElement.prototype.getContext = vi.fn(() => null) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 });
 
@@ -96,6 +133,8 @@ async function flushMap() {
 }
 
 afterEach(() => {
+  mapControl.deferStyleLoad = false;
+  vi.useRealTimers();
   mapInstances.length = 0;
   vi.clearAllMocks();
 });
@@ -105,7 +144,7 @@ function radarOpacities(): number[] {
     setPaintProperty: ReturnType<typeof vi.fn>;
   };
   return map.setPaintProperty.mock.calls
-    .filter((call) => call[1] === "raster-opacity")
+    .filter((call) => call[1] === "raster-opacity" && call[0] !== "clouds")
     .map((call) => call[2] as number);
 }
 
@@ -116,6 +155,190 @@ describe("RadarMap", () => {
     await flushMap();
     expect(mapInstances).toHaveLength(1);
     expect(mapInstances[0].options.center).toEqual([-74.01, 40.71]);
+  });
+
+  it("caps zoom at the radar tiles' max so they never stretch", async () => {
+    fetchRadarFrames.mockResolvedValue({ host: "https://h", frames: [], generated: 0 });
+    render(<RadarMap location={NYC} />);
+    await flushMap();
+    expect(mapInstances[0].options.maxZoom).toBe(7);
+    expect(mapInstances[0].options.zoom).toBeLessThan(7);
+  });
+
+  it("renders the base map as a muted dark layer so weather stands out", async () => {
+    fetchRadarFrames.mockResolvedValue({ host: "https://h", frames: [], generated: 0 });
+    render(<RadarMap location={NYC} />);
+    await flushMap();
+    const paint = mapInstances[0].options.style.layers[0].paint ?? {};
+    expect(paint["raster-saturation"]).toBeLessThan(0);
+    expect(paint["raster-brightness-max"]).toBeLessThan(paint["raster-brightness-min"]);
+  });
+
+  it("registers the clouds tile protocol and removes it on unmount", async () => {
+    fetchRadarFrames.mockResolvedValue({ host: "https://h", frames: [], generated: 0 });
+    const { unmount } = render(<RadarMap location={NYC} />);
+    await flushMap();
+    expect(addProtocol).toHaveBeenCalledWith("clouds", expect.any(Function));
+    unmount();
+    expect(removeProtocol).toHaveBeenCalledWith("clouds");
+  });
+
+  it("keeps clouds off by default", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await flushMap();
+    expect(screen.getByRole("button", { name: "Clouds" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(fetchLatestCloudTime).not.toHaveBeenCalled();
+  });
+
+  it("adds the latest satellite cloud layer under the radar when toggled on", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+
+    expect(screen.getByRole("button", { name: "Clouds" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(await screen.findByText(/Clouds 20:10 UTC/)).toBeInTheDocument();
+    const map = mapInstances[0];
+    await waitFor(() =>
+      expect(map.addSource).toHaveBeenCalledWith(
+        "clouds",
+        expect.objectContaining({
+          tiles: [expect.stringContaining("/2026-10-10T20:10:00Z/")],
+          maxzoom: 7,
+        }),
+      ),
+    );
+    expect(map.addLayer).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "clouds", source: "clouds" }),
+      "radar-0",
+    );
+  });
+
+  it("hides the cloud layer when toggled off", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+
+    expect(screen.queryByText(/Clouds 20:10 UTC/)).not.toBeInTheDocument();
+    expect(mapInstances[0].setLayoutProperty).toHaveBeenLastCalledWith(
+      "clouds",
+      "visibility",
+      "none",
+    );
+  });
+
+  it("surfaces a readable error when the satellite request fails", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    fetchLatestCloudTime.mockRejectedValue(
+      new Error("image time request failed (503)."),
+    );
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Satellite clouds unavailable — image time request failed (503).",
+    );
+    expect(screen.getByRole("button", { name: "Play radar" })).toBeInTheDocument();
+  });
+
+  it("waits for the style, not for tiles, before touching layers", async () => {
+    mapControl.deferStyleLoad = true;
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    const map = mapInstances[0];
+    expect(map.addLayer).not.toHaveBeenCalled();
+
+    act(() => map.emit("style.load"));
+
+    await waitFor(() => expect(map.addLayer).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.6]));
+  });
+
+  it("applies a quick Clouds off even while tiles are still loading", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    const map = mapInstances[0];
+    await waitFor(() =>
+      expect(map.addSource).toHaveBeenCalledWith("clouds", expect.anything()),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+
+    expect(map.setLayoutProperty).toHaveBeenLastCalledWith("clouds", "visibility", "none");
+  });
+
+  it("surfaces cloud tile failures from the map", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+    const map = mapInstances[0];
+
+    act(() =>
+      map.emit("error", {
+        sourceId: "clouds",
+        error: new Error("tile request failed (502)."),
+      }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Satellite clouds unavailable — tile request failed (502).",
+    );
+  });
+
+  it("ignores aborted cloud tiles and errors from other sources", async () => {
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+    const map = mapInstances[0];
+    const aborted = new Error("aborted");
+    aborted.name = "AbortError";
+
+    act(() => {
+      map.emit("error", { sourceId: "clouds", error: aborted });
+      map.emit("error", { sourceId: "radar-0", error: new Error("boom") });
+    });
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("refreshes to the newest satellite image every 10 minutes while on", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fetchRadarFrames.mockResolvedValue(TWO_FRAMES);
+    render(<RadarMap location={NYC} />);
+    await screen.findByRole("button", { name: "Play radar" });
+    fireEvent.click(screen.getByRole("button", { name: "Clouds" }));
+    await screen.findByText(/Clouds 20:10 UTC/);
+
+    fetchLatestCloudTime.mockResolvedValue("2026-10-10T20:20:00Z");
+    await act(async () => {
+      vi.advanceTimersByTime(10 * 60 * 1000);
+    });
+
+    expect(await screen.findByText(/Clouds 20:20 UTC/)).toBeInTheDocument();
+    expect(mapInstances[0].cloudSetTiles).toHaveBeenCalledWith([
+      expect.stringContaining("/2026-10-10T20:20:00Z/"),
+    ]);
   });
 
   it("adds a radar raster layer per frame once frames load", async () => {
@@ -172,7 +395,7 @@ describe("RadarMap", () => {
     await waitFor(() => expect(fetchWindField).toHaveBeenCalled());
     expect(await screen.findByText(/Wind now · 15:00 UTC/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Play radar" })).toBeInTheDocument();
-    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.35]));
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.6]));
   });
 
   it("drops the wind layer when radar is selected", async () => {
@@ -183,7 +406,7 @@ describe("RadarMap", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Radar" }));
 
     expect(screen.queryByText(/Wind now|Loading wind/)).not.toBeInTheDocument();
-    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.7]));
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.85]));
   });
 
   it("hides the timeline and drops radar opacity in wind mode", async () => {
@@ -207,7 +430,7 @@ describe("RadarMap", () => {
 
     expect(screen.getByRole("button", { name: "Play radar" })).toBeInTheDocument();
     // The visible frame (the latest past one) is dimmed; the other stays hidden.
-    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.35]));
+    await waitFor(() => expect(radarOpacities().slice(-2)).toEqual([0, 0.6]));
   });
 
   it("keeps the map mounted when the wind request fails", async () => {
