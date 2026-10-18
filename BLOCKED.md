@@ -1,4 +1,8 @@
 # BLOCKED — what I need from Evan
 
-- [ ] 🟡 Point `mondaugen.evanappel.me` at Vercel — in Wix DNS for `evanappel.me`, add a CNAME: host `mondaugen`, target `cname.vercel-dns.com`. The domain is already attached to the Vercel project `mondaugen`. This is a free DNS alias, same as the other `*.evanappel.me` records, and nothing works at that hostname until the record exists.
-- [ ] 🟡 Check the Vercel preview of the PR by eye: the dark base map, radar contrast, and the Clouds toggle (does it show clouds over the Americas, and does night-time GeoColor look OK?). This is the browser path that unit tests fake. Open https://mondaugen-git-map-clarity-evan-appel-s-projects.vercel.app (PR #20) and toggle Clouds; merge PR #20 if it looks right.
+Nothing blocked right now.
+
+<!-- Resolved (checked 2026-10-17):
+  - mondaugen.evanappel.me DNS: Cloudflare CNAME → Vercel is in place; HTTPS returns
+    200 from Vercel serving "Mondaugen — weather".
+  - PR #20 (map clarity) visual check: merged 2026-10-10. -->

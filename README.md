@@ -10,8 +10,7 @@ in the sferics — radio noise from the atmosphere.
 
 Part of [Evan Appel's portfolio](https://evanappel.me).
 
-- **Live:** deployed on Vercel _(custom domain `mondaugen.evanappel.me` pending DNS;
-  served at the Vercel URL until then)._
+- **Live:** [mondaugen.evanappel.me](https://mondaugen.evanappel.me) (Vercel)
 - **Repo:** [EvanWAppel/mondaugen](https://github.com/EvanWAppel/mondaugen)
 - **Spec:** [PRD.md](./PRD.md) · **Decisions:** [DECISIONS.md](./DECISIONS.md) ·
   **Board:** [TASKS.md](./TASKS.md)
