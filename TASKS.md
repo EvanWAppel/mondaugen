@@ -62,12 +62,12 @@ assume earlier ones.
   https://weather-iota-murex.vercel.app. Custom domain `weather.evanappel.me` was
   added to the project but **deferred** — it still needed a `weather` DNS record
   at Wix. Renamed 2026-09-27: repo `EvanWAppel/mondaugen`, Vercel project
-  `mondaugen`, domain `mondaugen.evanappel.me` (DNS still deferred; see
-  BLOCKED.md).)
+  `mondaugen`, domain `mondaugen.evanappel.me` — live since the DNS move to
+  Cloudflare; verified 200 over HTTPS 2026-10-17.)
 - [ ] **SHIP-03** Flip `status` to `"live"` in the portfolio `projects.toml` and
   update the portfolio README table row. (Edits staged in the enki repo
   2026-09-26 — status→live + personal-app description; commit pending review.
-  Custom domain `mondaugen.evanappel.me` deferred until DNS is set up.)
+  Custom domain `mondaugen.evanappel.me` is now live, so the row can link it.)
 
 ## v0.3 Portfolio enhancements (see PRD §6.5/§6.6, DECISIONS 2026-09-26)
 
