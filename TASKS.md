@@ -151,6 +151,11 @@ self-contained, highest visual return). Each group is largely independent.
   now generated via `next/og` (`/icon-192.png`, `/icon-512.png`) alongside the SVG
   favicon, so the manifest meets install criteria. **Note:** install prompt / SW
   runtime behavior still wants a browser to confirm.)
+- [x] **QA-06** Unit tests for untested logic components: `MapLayerToggle`
+  (radio group, aria-checked, onChange), `SkyFacts` (FR-16 failure message, no
+  throw into the forecast), `Colophon` (credits every source; NFR-4), `WindOverlay`
+  (reduced motion draws static arrows; fetch failure surfaces; FR-15). (Done —
+  characterization tests of current behaviour, network mocked.)
 
 ## WIND — streams on the radar map (FR-15)
 
