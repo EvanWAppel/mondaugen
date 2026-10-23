@@ -1,0 +1,39 @@
+# Drafted 2026-10-22 by a weekend-prep agent from the code and docs on origin/main.
+# Not yet verified in the project's own session. Format: ~/Documents/_system/docs/project-toml.md
+
+[project]
+name = "mondaugen"
+group = "portfolio"
+kind = "app"
+status = "active"
+repo = "EvanWAppel/mondaugen"
+visibility = "public"
+on_site = true              # enki data/projects.ts card id "weather" (still titled "Atmosphere")
+verified = false
+
+[deploy]
+host = "vercel"
+services = ["mondaugen"]    # Vercel project, renamed from "weather" 2026-09-27 (TASKS SHIP-02)
+domain = "mondaugen.evanappel.me"
+origin_urls_closed = false  # mondaugen.vercel.app and weather-iota-murex.vercel.app both return 200 (2026-10-22)
+
+[auth]
+scheme = "none"
+access_list = ""
+target = "none"             # public, no accounts by design (PRD non-goal)
+
+[data]
+db = "none"                 # favorites/location live in browser localStorage only
+
+[demo]
+status = "none"             # the whole app is public
+url = ""
+path = ""
+
+[keys]
+paid = []                   # keyless: Open-Meteo, RainViewer, NASA GIBS, OSM
+isolated = "n/a"
+spend_cap = "n/a"
+
+[platform]
+done = []
