@@ -156,6 +156,11 @@ self-contained, highest visual return). Each group is largely independent.
   throw into the forecast), `Colophon` (credits every source; NFR-4), `WindOverlay`
   (reduced motion draws static arrows; fetch failure surfaces; FR-15). (Done —
   characterization tests of current behaviour, network mocked.)
+- [x] **QA-07** Extend the e2e smoke test with the map toolbar: the layer toggle
+  (Radar/Both/Wind radio group, aria-checked moves on click) and the Clouds toggle
+  (accessible name, aria-pressed). (Done — `e2e/smoke.spec.ts` "map controls"; all
+  third-party requests are aborted so no live data is needed. Listed via
+  `npx playwright test --list`; the browser run happens in CI's `e2e` job.)
 
 ## WIND — streams on the radar map (FR-15)
 
