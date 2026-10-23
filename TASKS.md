@@ -123,6 +123,9 @@ self-contained, highest visual return). Each group is largely independent.
 - [x] **DOC-02** Portfolio-grade repo README: "why", features, architecture,
   keyless data sources, develop/deploy. (Done — rewrote README to the personal-app
   framing; hero-image slot left as a comment until a screenshot is captured.)
+- [x] **DOC-03** README parity with what shipped after DOC-02: tonight's sky,
+  wind streams, NASA GIBS clouds toggle, muted base map. Every source credited in
+  `Footer.tsx`/`Colophon.tsx` is also in the README. (Done — docs only.)
 
 ### QUALITY — proof it's senior (Idea 4 · NFR-5..NFR-8)
 
