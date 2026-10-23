@@ -123,6 +123,9 @@ self-contained, highest visual return). Each group is largely independent.
 - [x] **DOC-02** Portfolio-grade repo README: "why", features, architecture,
   keyless data sources, develop/deploy. (Done — rewrote README to the personal-app
   framing; hero-image slot left as a comment until a screenshot is captured.)
+- [x] **DOC-03** README parity with what shipped after DOC-02: tonight's sky,
+  wind streams, NASA GIBS clouds toggle, muted base map. Every source credited in
+  `Footer.tsx`/`Colophon.tsx` is also in the README. (Done — docs only.)
 
 ### QUALITY — proof it's senior (Idea 4 · NFR-5..NFR-8)
 
@@ -134,7 +137,10 @@ self-contained, highest visual return). Each group is largely independent.
 - [~] **QA-02** Performance proof: ~100 Lighthouse mobile. (Practices in place —
   map + charts lazy-loaded, no ad/tracker requests, static prerender. **The score
   itself needs a browser/Lighthouse run** (not possible from here); verify in
-  browser or add Lighthouse-CI.)
+  browser or add Lighthouse-CI.) **Lighthouse-CI added** — `lighthouse` job in
+  `.github/workflows/ci.yml` + `lighthouserc.json` (mobile, perf/a11y ≥ 0.9 at *warn*
+  level, filesystem report uploaded as the `lighthouse-report` artifact, nothing public).
+  Stays `[~]` until Evan reads the CI score and accepts it.
 - [x] **QA-03** Playwright E2E smoke. (Done — `@playwright/test` + `playwright.config.ts`
   + `e2e/smoke.spec.ts` (shell, palette open/close, colophon); `npm run test:e2e`.
   Specs compile/list clean; the browser run happens in CI, not locally, per the
@@ -148,6 +154,16 @@ self-contained, highest visual return). Each group is largely independent.
   now generated via `next/og` (`/icon-192.png`, `/icon-512.png`) alongside the SVG
   favicon, so the manifest meets install criteria. **Note:** install prompt / SW
   runtime behavior still wants a browser to confirm.)
+- [x] **QA-06** Unit tests for untested logic components: `MapLayerToggle`
+  (radio group, aria-checked, onChange), `SkyFacts` (FR-16 failure message, no
+  throw into the forecast), `Colophon` (credits every source; NFR-4), `WindOverlay`
+  (reduced motion draws static arrows; fetch failure surfaces; FR-15). (Done —
+  characterization tests of current behaviour, network mocked.)
+- [x] **QA-07** Extend the e2e smoke test with the map toolbar: the layer toggle
+  (Radar/Both/Wind radio group, aria-checked moves on click) and the Clouds toggle
+  (accessible name, aria-pressed). (Done — `e2e/smoke.spec.ts` "map controls"; all
+  third-party requests are aborted so no live data is needed. Listed via
+  `npx playwright test --list`; the browser run happens in CI's `e2e` job.)
 
 ## WIND — streams on the radar map (FR-15)
 

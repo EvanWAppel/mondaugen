@@ -33,3 +33,44 @@ test.describe("Mondaugen smoke", () => {
     ).toBeVisible();
   });
 });
+
+// QA-07: the map toolbar controls. Every third-party request (radar frames,
+// wind, satellite clouds, tiles, forecast) is aborted so the assertions only
+// cover the toolbar, which renders whether or not the live data arrives.
+test.describe("Mondaugen map controls", () => {
+  test.beforeEach(async ({ page, baseURL }) => {
+    const origin = new URL(baseURL ?? "http://localhost:3000").origin;
+    await page.route(
+      (url) => url.origin !== origin,
+      (route) => route.abort(),
+    );
+    await page.goto("/");
+    // The map mounts only once its section scrolls near the viewport.
+    await page.getByRole("region", { name: /radar map/i }).scrollIntoViewIfNeeded();
+  });
+
+  test("map layer toggle offers Radar, Both and Wind with radio semantics", async ({
+    page,
+  }) => {
+    const group = page.getByRole("radiogroup", { name: /map layer/i });
+    await expect(group).toBeVisible();
+    for (const name of ["Radar", "Both", "Wind"]) {
+      await expect(group.getByRole("radio", { name, exact: true })).toBeVisible();
+    }
+    // "Both" is the default; choosing Radar moves the checked state.
+    const both = group.getByRole("radio", { name: "Both", exact: true });
+    const radar = group.getByRole("radio", { name: "Radar", exact: true });
+    await expect(both).toHaveAttribute("aria-checked", "true");
+    await radar.click();
+    await expect(radar).toHaveAttribute("aria-checked", "true");
+    await expect(both).toHaveAttribute("aria-checked", "false");
+  });
+
+  test("clouds toggle renders as an unpressed toggle button", async ({ page }) => {
+    // Only the initial state is asserted: turning clouds on fetches the
+    // satellite image, and a failed fetch (aborted here) switches it back off.
+    const clouds = page.getByRole("button", { name: "Clouds", exact: true });
+    await expect(clouds).toBeVisible();
+    await expect(clouds).toHaveAttribute("aria-pressed", "false");
+  });
+});
