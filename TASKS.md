@@ -137,7 +137,10 @@ self-contained, highest visual return). Each group is largely independent.
 - [~] **QA-02** Performance proof: ~100 Lighthouse mobile. (Practices in place —
   map + charts lazy-loaded, no ad/tracker requests, static prerender. **The score
   itself needs a browser/Lighthouse run** (not possible from here); verify in
-  browser or add Lighthouse-CI.)
+  browser or add Lighthouse-CI.) **Lighthouse-CI added** — `lighthouse` job in
+  `.github/workflows/ci.yml` + `lighthouserc.json` (mobile, perf/a11y ≥ 0.9 at *warn*
+  level, filesystem report uploaded as the `lighthouse-report` artifact, nothing public).
+  Stays `[~]` until Evan reads the CI score and accepts it.
 - [x] **QA-03** Playwright E2E smoke. (Done — `@playwright/test` + `playwright.config.ts`
   + `e2e/smoke.spec.ts` (shell, palette open/close, colophon); `npm run test:e2e`.
   Specs compile/list clean; the browser run happens in CI, not locally, per the

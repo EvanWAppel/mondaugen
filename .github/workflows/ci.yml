@@ -32,3 +32,26 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
+  # QA-02: Lighthouse (mobile, default form factor) against the production
+  # build. Assertions are warn-only, so this job reports the score without
+  # failing the PR. Reports stay in the filesystem and are uploaded as a
+  # workflow artifact; nothing goes to public storage.
+  lighthouse:
+    name: lighthouse (lhci)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx --yes @lhci/cli@0.14.0 autorun
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          if-no-files-found: warn
