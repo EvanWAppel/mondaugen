@@ -6,43 +6,29 @@
 a 10-day forecast and an interactive radar map. Live at https://mondaugen.evanappel.me (Vercel,
 auto-deploys on push to `main`).
 
-**Current state (2026-10-22, `origin/main` @ 896e1d6).** All feature groups in TASKS.md are done
-(SETUP, LOC, FC, MAP, ATM, FAV/SUN, OG/DOC, QA-01/03/04/05, WIND, SKY, MAP-CL). Open: **SHIP-03**
-(lives in the enki repo) and **QA-02** (Lighthouse score). No open PRs. On default:
-`npm run test` passes 26 files and 159 tests, `npm run lint` is clean, and `npm run build` is green. The local
-checkout `~/Documents/portfolio/weather` sits on `map-clarity` with a pushed WIP snapshot (6836e0a)
-that updates the ROCRLL standing-rules block in AGENTS.md/CLAUDE.md. That change is not on `main`.
+**Current state (2026-10-23, `origin/main` @ 728f22d).** All feature groups in TASKS.md are done
+(SETUP, LOC, FC, MAP, ATM, FAV/SUN, OG/DOC, QA-01/03/04/05/06/07, WIND, SKY, MAP-CL, DOC-03, CHORE-01).
+PR #22 (weekend 2026-10-24) landed every autonomous task below; PR #23 synced the blocker protocol.
+Open: **SHIP-03** (lives in the enki repo, see BLOCKED.md) and **QA-02** (`[~]`: the Lighthouse CI
+job exists; it stays open until Evan reads the CI score and accepts it). No open PRs. On default
+(measured 2026-10-24): `npm run test` passes 31 files and 182 tests and `npm run lint` is clean;
+`npm run build` was not re-run here, but main's CI is green on the last three merges. The ROCRLL
+wording from the old `map-clarity` WIP snapshot (6836e0a) is now on `main` (CHORE-01, #22).
 
 **Setup:** `npm ci`. **Check (run all before every PR):** `npm run test && npm run lint && npm run build`.
 
-### Autonomous tasks, in order (one branch + one PR each, off `origin/main`; never merge)
+### Autonomous tasks
 
-1. **DOC-03: README parity.** README omits features shipped since DOC-02: the NASA GIBS clouds
-   toggle (MAP-CL-03), wind streams (WIND), tonight's sky (SKY), and the muted base map. Update Features,
-   Architecture (data-source list), and Attribution to match `Footer.tsx`/`Colophon.tsx` and the
-   CLAUDE.md data-source list. *Done:* every source credited in the footer is also in the README; no new claims.
-   *Test:* `npm run lint` (docs only).
-2. **CHORE-01: Sync the standing rules to `main`.** Port the ROCRLL block wording from the WIP commit
-   `6836e0a` (`git show 6836e0a -- AGENTS.md CLAUDE.md`) onto main: "remove each worktree…" and
-   "affected tests + lint + typecheck at each join; full suite once before final merge". Keep the
-   Next.js `nextjs-agent-rules` block intact. *Done:* `git diff origin/map-clarity -- CLAUDE.md AGENTS.md` is empty
-   apart from deliberate differences. *Test:* none (docs).
-3. **QA-06: Unit tests for untested logic components.** Write the tests first, and keep each one to the
-   current behaviour (do not change behaviour to fit a test): `MapLayerToggle` (Radar/Both/Wind
-   selection, aria state), `SkyFacts` (a failure renders a readable message and does not throw into
-   the forecast; FR-16), `Colophon` (credits every data source; NFR-4), and `WindOverlay`
-   (reduced-motion draws static arrows, and a fetch failure surfaces; FR-15). Mock all network calls. *Done:* new
-   `*.test.tsx` beside each component, and the suite stays green. *Test:* `npm run test`.
-4. **QA-07: Extend the e2e smoke test (runs in CI only).** In `e2e/smoke.spec.ts`, add a deterministic test that
-   the map layer toggle (Radar/Both/Wind) and the Clouds toggle render with accessible names. Do not
-   depend on live API data. *Done:* `npx playwright test --list` shows the new tests. **Do not run
-   Playwright locally** (browser guardrail). The run happens in the PR's CI `e2e` job.
-5. **QA-02 (partial): Lighthouse CI job.** Add a `lighthouse` job to `.github/workflows/ci.yml`
-   (`npm ci && npm run build`, then `npx @lhci/cli@0.14.x autorun` against `npm run start`) plus a
-   `lighthouserc.json` with **warn-level** assertions (performance and accessibility ≥ 0.9) and
-   `upload.target = "temporary-public-storage"` *off*. Use `filesystem` and upload the report as an
-   artifact, so nothing gets published. Do not add an npm dependency. *Done:* the job exists, the YAML is valid,
-   and the PR notes say Evan reads the score in CI. Leave QA-02 `[~]` until he accepts the number.
+**None queued.** All five tasks from the weekend list merged in PR #22:
+1. ~~DOC-03: README parity~~ (#22).
+2. ~~CHORE-01: sync the ROCRLL standing rules to `main`~~ (#22).
+3. ~~QA-06: unit tests for `MapLayerToggle`, `SkyFacts`, `Colophon`, `WindOverlay`~~ (#22).
+4. ~~QA-07: e2e checks for the map layer and Clouds toggles~~ (#22; runs in CI only).
+5. ~~QA-02 (partial): Lighthouse CI job + `lighthouserc.json`~~ (#22). QA-02 itself stays `[~]`
+   until Evan accepts the score.
+
+What's left is Evan's: SHIP-03 (enki card copy, BLOCKED.md) and accepting the QA-02 score. The
+TASKS "Later" list is out of scope. Check `BLOCKED.md` and `TASKS.md` before starting anything new.
 
 ### House rules (from CLAUDE.md, which wins on any conflict)
 - **TDD.** Write the failing test first, then the code. Do not hide or wrap errors (FR-6). The Vitest suite mocks all network calls.
