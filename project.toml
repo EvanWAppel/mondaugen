@@ -37,3 +37,13 @@ spend_cap = "n/a"
 
 [platform]
 done = []
+
+[commands]
+dev = "npm run dev"
+test = "npm run test"
+lint = "npm run lint"
+
+[meta]
+description = "Mondaugen — ad-free 10-day forecast + interactive radar"
+language = "node"
+tags = ["portfolio"]
