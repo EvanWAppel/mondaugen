@@ -42,8 +42,16 @@ done = []
 dev = "npm run dev"
 test = "npm run test"
 lint = "npm run lint"
+setup = "npm ci"
 
 [meta]
 description = "Mondaugen — ad-free 10-day forecast + interactive radar"
 language = "node"
 tags = ["portfolio"]
+
+[fleet]                     # joined 2026-11-01 (_system D-051); also has the `fleet` topic
+component = "mondaugen"
+agents = ["claude", "codex"]
+default_model = "sonnet"
+default_branch = "main"
+max_minutes = 45
