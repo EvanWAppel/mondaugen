@@ -9,7 +9,7 @@ assume earlier ones.
 - [x] **SETUP-01** Scaffold Next.js at the repo root: `create-next-app` with App
   Router, TypeScript, Tailwind, ESLint, `src/`, `@/*` alias. Replace boilerplate
   splash with a minimal placeholder. Lint + production build green.
-- [x] **SETUP-02** Wire up the manifest commands so `orch dev/test/lint mondaugen`
+- [x] **SETUP-02** Wire up the manifest commands so `orch dev/test/lint weather`
   work: `npm run dev`, `npm run test`, `npm run lint`. Add a test runner
   (Vitest) and one smoke test so `npm run test` is real.
 - [x] **SETUP-03** Add a footer with data-source attribution placeholders
