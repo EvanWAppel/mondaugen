@@ -1,4 +1,4 @@
-# CLAUDE.md — weather
+# CLAUDE.md — mondaugen
 
 Guidance for AI assistants working in this repo. Read [PRD.md](./PRD.md) and
 [TASKS.md](./TASKS.md) first; they are the source of truth for scope.

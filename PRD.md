@@ -1,4 +1,4 @@
-# PRD — Mondaugen (codename: *weather*)
+# PRD — Mondaugen
 
 **Status:** Draft v0.3 (portfolio-enhancement wave — see DECISIONS.md 2026-09-26)
 **Author:** Evan Appel
