@@ -1,6 +1,25 @@
-# DECISIONS — weather
+# DECISIONS — mondaugen
 
 Record here any change to a locked PRD decision, with the reason (per CLAUDE.md).
+
+## 2026-11-25 — Local folder and `orch` key follow the Mondaugen name
+
+**Decision:** The last places that used `weather` as the repo's name now say
+`mondaugen`: the local folder (`~/Documents/portfolio/mondaugen`), the
+portfolio `orch` entry (`[projects.mondaugen]`, path `mondaugen`), and the doc
+headings. The old Vercel alias `weather-iota-murex.vercel.app` is to be removed, so
+the app is served only at `mondaugen.evanappel.me` and `mondaugen.vercel.app`.
+
+**Why:** Requested to finish the rename. This lifts the "Still `weather`" hold
+in the 2026-09-27 entry below.
+
+**Unchanged:** Code names that mean the sky, not the product (`WeatherApp`,
+`weatherCodes`, `WeatherIcon`, `.weather-icon`), and the one-time migration
+from old `weather:` storage keys, which still has to find them. Historical
+entries in this log and in TASKS.md keep the names they had at the time.
+
+**Trade-off:** Anyone holding the old `weather-iota-murex` link gets a 404
+instead of the app. Accepted; the custom domain has been live since 2026-10-17.
 
 ## 2026-10-10 — Clearer radar map: muted base, zoom cap, satellite clouds
 

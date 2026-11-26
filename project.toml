@@ -8,7 +8,7 @@ kind = "app"
 status = "active"
 repo = "EvanWAppel/mondaugen"
 visibility = "public"
-on_site = true              # enki data/projects.ts card id "weather" (still titled "Atmosphere")
+on_site = true              # enki data/projects.ts card id "mondaugen"
 verified = false
 
 [deploy]

@@ -1,4 +1,4 @@
-# PRIMER — Mondaugen (repo `EvanWAppel/mondaugen`, local folder `portfolio/weather`)
+# PRIMER — Mondaugen (repo `EvanWAppel/mondaugen`, local folder `portfolio/mondaugen`)
 
 ## Next session — 2026-10-24 weekend
 
@@ -50,5 +50,5 @@ TASKS "Later" list is out of scope. Check `BLOCKED.md` and `TASKS.md` before sta
 - **Run Lighthouse or Playwright locally,** or judge the QA-02 score yourself.
 - **Anything in TASKS "Later"** (alerts, hourly tab, permalinks, extra layers, accounts).
 - Touch Vercel settings or domains, add keys, read `.env*`, or modify the
-  `~/Documents/portfolio/weather` checkout (work in a worktree).
+  `~/Documents/portfolio/mondaugen` checkout (work in a worktree).
 - Encrypted paths: none (no `.gitattributes`).

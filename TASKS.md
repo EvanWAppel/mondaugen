@@ -1,4 +1,4 @@
-# TASKS — weather
+# TASKS — mondaugen
 
 Task board for the ad-free weather app. IDs are stable; check items off as they
 land. See [PRD.md](./PRD.md) for the what/why. Work top-to-bottom — later tasks
@@ -64,10 +64,11 @@ assume earlier ones.
   at Wix. Renamed 2026-09-27: repo `EvanWAppel/mondaugen`, Vercel project
   `mondaugen`, domain `mondaugen.evanappel.me` — live since the DNS move to
   Cloudflare; verified 200 over HTTPS 2026-10-17.)
-- [ ] **SHIP-03** Flip `status` to `"live"` in the portfolio `projects.toml` and
-  update the portfolio README table row. (Edits staged in the enki repo
-  2026-09-26 — status→live + personal-app description; commit pending review.
-  Custom domain `mondaugen.evanappel.me` is now live, so the row can link it.)
+- [x] **SHIP-03** Flip `status` to `"live"` in the portfolio `projects.toml` and
+  update the portfolio README table row. (Done — verified 2026-11-25:
+  `projects.toml` has `status = "live"`, the README row reads `live`, and the
+  enki card on enki `main` is id `mondaugen` linking `EvanWAppel/mondaugen` and
+  https://mondaugen.evanappel.me/. Jira EA-206 closed.)
 
 ## v0.3 Portfolio enhancements (see PRD §6.5/§6.6, DECISIONS 2026-09-26)
 
